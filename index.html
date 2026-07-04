@@ -4,6 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Shark vs Dolphin Chess</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#16436b" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="SharkChess" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
 <style>
   :root{
     --lagoon:#aee7f8;
@@ -185,9 +192,13 @@
   }
 
   /* modals */
-  .modal{position:fixed;inset:0;background:#0b3a5cb8;display:none;align-items:center;justify-content:center;padding:20px;z-index:40}
+  .modal{position:fixed;inset:0;background:#0b3a5cb8;display:none;align-items:center;justify-content:center;padding:16px;z-index:40;overflow-y:auto}
   .modal.open{display:flex}
-  .modalCard{background:#fff;padding:22px;border-radius:26px;max-width:520px;width:100%;text-align:center;box-shadow:0 22px 50px rgba(4,32,56,.4);border:3px solid var(--border)}
+  .modalCard{
+    background:#fff;padding:22px;border-radius:26px;max-width:520px;width:100%;text-align:center;
+    box-shadow:0 22px 50px rgba(4,32,56,.4);border:3px solid var(--border);
+    max-height:88vh;max-height:88dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:auto;
+  }
   .modalCard h2{margin:0 0 6px;font-size:24px}
   .modalCard p{margin:0 0 14px;color:#3d6d94;font-size:14px;font-weight:600}
   .promoGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}
@@ -277,11 +288,13 @@
   @media(max-width:560px){
     body{padding:10px}
     .chooseGrid{grid-template-columns:1fr}
+    .chooseGrid.fourCol{grid-template-columns:repeat(2,1fr)}
     .botRow{grid-template-columns:repeat(3,1fr)}
     .buttonRow{grid-template-columns:1fr}
     .endTitle{font-size:30px}
     .swimmer{width:84px;height:84px}
     .runner{width:66px;height:66px}
+    .nameRow{grid-template-columns:1fr}
     @keyframes winnerChase{
       0%{transform:translateX(0)}
       55%{transform:translateX(150px)}
@@ -289,6 +302,60 @@
       100%{transform:translateX(180px) scale(1.05)}
     }
   }
+
+  /* clocks */
+  .clocks{display:none;justify-content:space-between;gap:10px;margin:0 auto 12px;width:min(92vw,680px)}
+  .clocks.show{display:flex}
+  .clock{flex:1;text-align:center;font-weight:800;font-size:19px;padding:8px 10px;border-radius:16px;background:#f0faff;border:2.5px solid var(--border);color:#2c6a96;font-variant-numeric:tabular-nums}
+  .clock.active{background:#fff3d1;border-color:#ffd66b;color:#8a6410}
+  .clock.low{background:#ffe3e8;border-color:var(--coral);color:#c2374f;animation:pulse 1s ease-in-out infinite}
+
+  /* name inputs & time grid */
+  .nameRow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;text-align:left}
+  .nameRow label{display:block;font-size:12px;font-weight:800;color:#2c6a96;margin-bottom:4px}
+  .nameInput{width:100%;padding:10px 12px;border-radius:14px;border:2.5px solid var(--border);font-family:inherit;font-weight:700;font-size:14px;color:var(--deepnavy);background:#f7fcff}
+  .nameInput:focus-visible{outline:4px solid var(--sunny);border-color:var(--coral)}
+  .chooseGrid.fourCol{grid-template-columns:repeat(4,1fr)}
+
+  /* dark mode: deep sea night */
+  body.dark{
+    background:
+      radial-gradient(circle at 20% 6%, #1a4a7222 0%, transparent 30%),
+      linear-gradient(180deg,#071f36 0%, #0a2c49 45%, #0d3a5e 100%);
+    color:#dcecf8;
+  }
+  body.dark h1{color:#eaf6ff;text-shadow:0 2px 0 #05182b}
+  body.dark .tagline{color:#9cc3dd}
+  body.dark .mainCard,body.dark .side{background:#0e3253;border-color:#1e4d75}
+  body.dark .sideSection,body.dark .legendCard{background:#123a5f;border-color:#1e4d75;box-shadow:0 5px 14px rgba(0,0,0,.3)}
+  body.dark .sectionTitle,body.dark .chooseTitle,body.dark .nameRow label{color:#9fd2f0}
+  body.dark .statusCard{background:linear-gradient(180deg,#33406b,#28325a);border-color:#4b5a95}
+  body.dark .statusLabel{color:#aebdf5}
+  body.dark .status{color:#eef1ff}
+  body.dark .rules{background:#0e3253;border-color:#1e4d75;color:#bcd9ec}
+  body.dark .rules b{color:#eaf6ff}
+  body.dark .captured{background:#0e3253;border-color:#1e4d75}
+  body.dark .capturedLabel{color:#8fb8d4}
+  body.dark .pill{background:#0e3253;border-color:#1e4d75;color:#9fd2f0}
+  body.dark .legend{color:#bcd9ec}
+  body.dark .legend small{color:#7fa6c4 !important}
+  body.dark .board{border-color:#05182b;box-shadow:0 14px 30px rgba(0,0,0,.45), inset 0 0 0 3px #ffffff22}
+  body.dark .light{background:#c9dfed}
+  body.dark .dark{background:#628fae}
+  body.dark .btn.ghost{background:#174166;color:#bfe3fa;box-shadow:0 4px 0 #0b2b47}
+  body.dark .btn.ghost:hover{box-shadow:0 6px 0 #0b2b47}
+  body.dark .btn.ghost:active{box-shadow:0 1px 0 #0b2b47}
+  body.dark .modalCard{background:#123a5f;border-color:#1e4d75;color:#dcecf8}
+  body.dark .modalCard h2,body.dark .endTitle{color:#eaf6ff}
+  body.dark .modalCard p,body.dark .endSub{color:#9cc3dd}
+  body.dark .chooseCard,body.dark .botCard,body.dark .promoBtn{background:#0e3253;border-color:#1e4d75}
+  body.dark .chooseCard .name,body.dark .botCard .nm,body.dark .promoBtn span{color:#eaf6ff}
+  body.dark .chooseCard .desc,body.dark .botCard .lv{color:#8fb8d4}
+  body.dark .chooseCard.on,body.dark .botCard.on{background:#4a2438;border-color:var(--coral)}
+  body.dark .nameInput{background:#0e3253;border-color:#1e4d75;color:#eaf6ff}
+  body.dark .clock{background:#0e3253;border-color:#1e4d75;color:#9fd2f0}
+  body.dark .clock.active{background:#4a3d12;border-color:#ffd66b;color:#ffe6a1}
+  body.dark .ambient span{background:radial-gradient(circle at 32% 30%, #ffffff33, #6fb6e011);border-color:#ffffff22}
 </style>
 </head>
 <body>
@@ -301,6 +368,10 @@
   </header>
 
   <main class="mainCard">
+    <div class="clocks" id="clocks" aria-live="off">
+      <div class="clock" id="clockW">🐬 --:--</div>
+      <div class="clock" id="clockB">🦈 --:--</div>
+    </div>
     <div class="boardWrap">
       <div id="board" class="board" role="grid" aria-label="Ocean chess board"></div>
       <div class="fxLayer" id="fxLayer" aria-hidden="true"></div>
@@ -335,6 +406,10 @@
         <div class="buttonRow">
           <button class="btn ghost" id="sfx" aria-pressed="true">🔔 Sounds: on</button>
           <button class="btn ghost" id="music" aria-pressed="false">🎵 Music: off</button>
+        </div>
+        <div class="buttonRow">
+          <button class="btn ghost" id="theme" aria-pressed="false">🌙 Dark mode</button>
+          <button class="btn ghost" id="resign">🏳️ Resign</button>
         </div>
       </div>
       <div style="margin-top:10px">
@@ -379,6 +454,23 @@
     <p class="chooseTitle">Opponent</p>
     <div class="chooseGrid twoCol" id="oppGrid"></div>
     <div class="botRow" id="botRow" style="display:none"></div>
+
+    <div id="nameBlock">
+      <p class="chooseTitle">Player names (optional)</p>
+      <div class="nameRow">
+        <div>
+          <label for="nameW" id="nameWLabel">🐬 Dolphin player</label>
+          <input id="nameW" class="nameInput" maxlength="16" placeholder="Dolphins" autocomplete="off" />
+        </div>
+        <div id="nameBWrap">
+          <label for="nameB">🦈 Shark player</label>
+          <input id="nameB" class="nameInput" maxlength="16" placeholder="Sharks" autocomplete="off" />
+        </div>
+      </div>
+    </div>
+
+    <p class="chooseTitle">Time limit</p>
+    <div class="chooseGrid fourCol" id="timeGrid" style="margin-bottom:14px"></div>
 
     <button class="btn" id="startBtn" style="font-size:17px;padding:14px">🐟 Dive in!</button>
   </div>
@@ -520,8 +612,14 @@ const ROLE = {k:'King',q:'Queen',r:'Rook',b:'Bishop',n:'Knight',p:'Pawn',a:'Amaz
 const MODES = {
   reef:  {emoji:'🐚', name:'Reef Chess',   desc:'Classic chess — every piece is its own cute species!'},
   blind: {emoji:'🌫️', name:'Mystery Deep', desc:'Everyone looks the same. Remember who is who!'},
-  wild:  {emoji:'🌀', name:'Wild Waters',  desc:'Special super-pieces with wild new moves!'}
+  wild:  {emoji:'🌀', name:'Wild Waters (Chess variant)',  desc:'Special super-pieces with wild new moves!'}
 };
+const TIMES = [
+  {v:0,  em:'♾️', name:'No timer'},
+  {v:3,  em:'🐇', name:'3 min'},
+  {v:5,  em:'🐢', name:'5 min'},
+  {v:10, em:'🐌', name:'10 min'}
+];
 const BOTS = [
   {name:'Baby Reef',   em:'🐠', label:'Super easy', elo:150},
   {name:'Bubble Bot',  em:'🫧', label:'Easy',       elo:250},
@@ -534,7 +632,8 @@ const BOTS = [
 let board, turn='w', selected=null, moves=[], reveal=false, flipped=false,
     pendingPromotion=null, captured={w:[],b:[]}, gameOver=false, lastMove=null,
     mode='reef', playerSide='w', botOn=false, botIndex=0,
-    sfxOn=true, musicOn=false, audioCtx=null, musicTimer=null, animating=false;
+    sfxOn=true, musicOn=false, audioCtx=null, musicTimer=null, animating=false,
+    names={w:'',b:''}, timerSetting=0, clocks={w:0,b:0}, clockInterval=null, lastTick=0;
 
 const boardEl=document.getElementById('board'), statusEl=document.getElementById('status'),
       statusFace=document.getElementById('statusFace'),
@@ -554,6 +653,9 @@ function initial(){
   }
   turn='w'; selected=null; moves=[]; captured={w:[],b:[]};
   pendingPromotion=null; gameOver=false; lastMove=null; animating=false;
+  clocks={w:timerSetting*60,b:timerSetting*60};
+  document.getElementById('clocks').classList.toggle('show',timerSetting>0);
+  renderClocks(); startClock();
   document.getElementById('endModal').classList.remove('open');
   flipped = (playerSide==='b');
   render(); updateSideUI();
@@ -604,6 +706,38 @@ function hasAnyLegal(color){
     if(board[r][c]?.c===color && legalMoves(r,c).length){turn=oldTurn;return true;}
   turn=oldTurn; return false;
 }
+
+/* ---------- Clocks ---------- */
+function fmtTime(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function renderClocks(){
+  if(!timerSetting)return;
+  const cw=document.getElementById('clockW'), cb=document.getElementById('clockB');
+  cw.textContent='🐬 '+(names.w?names.w+' ':'')+fmtTime(clocks.w);
+  cb.textContent='🦈 '+(names.b?names.b+' ':'')+fmtTime(clocks.b);
+  cw.classList.toggle('active',turn==='w'&&!gameOver);
+  cb.classList.toggle('active',turn==='b'&&!gameOver);
+  cw.classList.toggle('low',clocks.w<=20&&clocks.w>0);
+  cb.classList.toggle('low',clocks.b<=20&&clocks.b>0);
+}
+function startClock(){
+  stopClock();
+  if(!timerSetting)return;
+  lastTick=performance.now();
+  clockInterval=setInterval(()=>{
+    const now=performance.now();
+    if(gameOver||pendingPromotion||animating){lastTick=now;return;}
+    clocks[turn]-=(now-lastTick)/1000;
+    lastTick=now;
+    if(clocks[turn]<=0){
+      clocks[turn]=0; renderClocks(); stopClock();
+      showEnd(turn==='w'?'b':'w',turn,'timeout');
+      return;
+    }
+    renderClocks();
+  },200);
+}
+function stopClock(){if(clockInterval)clearInterval(clockInterval);clockInterval=null;}
+function displayName(side){return names[side]||(side==='w'?'Dolphins':'Sharks')}
 
 /* ---------- Interaction ---------- */
 function clickSquare(r,c){
@@ -816,7 +950,11 @@ function updateStatus(){
   const enemy=turn==='w'?'b':'w', k=findKing(turn);
   const check=k&&attacked(k[0],k[1],enemy);
   statusFace.textContent=turn==='w'?'🐬':'🦈';
-  statusEl.textContent=(turn==='w'?'Dolphins':'Sharks')+(check?' — careful, check! 😲':"' turn to swim");
+  const who=displayName(turn);
+  const team=turn==='w'?'dolphins':'sharks';
+  const label=names[turn]?`${who}'s ${team}`:who;
+  statusEl.textContent=label+(check?' — careful, check! 😲':' — time to swim!');
+  renderClocks();
 }
 function renderCaptured(){
   const blind=(mode==='blind')&&!reveal;
@@ -868,6 +1006,7 @@ function updateSideUI(){
 /* ---------- End of game ---------- */
 function showEnd(winner,loser,kind){
   gameOver=true;
+  stopClock(); renderClocks();
   const scene=document.getElementById('endScene');
   const title=document.getElementById('endTitle');
   const sub=document.getElementById('endSub');
@@ -883,8 +1022,20 @@ function showEnd(winner,loser,kind){
       `<div class="swimmer" style="left:18%;top:70px">${creatureSVG('k','b')}</div>
        <div class="swimmer" style="right:18%;top:70px">${creatureSVG('k','w')}</div>
        <div class="heartBurp" style="left:48%;animation:heartUp 2s ease .4s infinite">💕</div>`);
+  }else if(kind==='timeout'||kind==='resign'){
+    const winName=displayName(winner);
+    title.textContent=kind==='timeout'?'Time\'s up!':'Good game!';
+    sub.textContent=`${winName} win the ocean! 🏆`;
+    text.textContent=kind==='timeout'
+      ?`${displayName(loser)} ran out of swimming time. Rematch?`
+      :`${displayName(loser)} waves a little white flag. Well played!`;
+    scene.insertAdjacentHTML('beforeend',
+      `<div class="swimmer" style="left:50%;top:64px;transform:translateX(-50%)">${creatureSVG('k',winner)}</div>
+       <div class="heartBurp" style="left:44%;animation:heartUp 1.8s ease .3s infinite">🏆</div>
+       <div class="heartBurp" style="left:58%;animation:heartUp 2.1s ease .7s infinite">💛</div>`);
+    if(winner==='b'){const w=scene.querySelector('.swimmer svg');if(w)w.style.transform='scaleX(-1)';}
   }else{
-    const winName=winner==='w'?'Dolphins':'Sharks';
+    const winName=displayName(winner);
     title.textContent='Checkmate!';
     sub.textContent=`${winName} win the ocean! 🏆`;
     text.textContent=(winner==='w'
@@ -942,7 +1093,7 @@ function stopMusic(){if(musicTimer)clearInterval(musicTimer);musicTimer=null;}
 /* ---------- Save / load ---------- */
 function saveGame(){
   try{
-    localStorage.setItem('sharkChessSave',JSON.stringify({board,turn,captured,mode,playerSide,botOn,botIndex,reveal,flipped,lastMove}));
+    localStorage.setItem('sharkChessSave',JSON.stringify({board,turn,captured,mode,playerSide,botOn,botIndex,reveal,flipped,lastMove,names,timerSetting,clocks}));
     statusEl.textContent='Game saved! 💾';
   }catch(e){statusEl.textContent='Could not save on this device.';}
 }
@@ -956,8 +1107,12 @@ function loadGame(){
     for(const side of['w','b'])captured[side]=captured[side].map(x=>typeof x==='string'?{t:x,c:side==='w'?'b':'w'}:x);
     mode=d.mode||'reef';playerSide=d.playerSide||'w';botOn=!!d.botOn;botIndex=d.botIndex||0;
     reveal=!!d.reveal;flipped=!!d.flipped;lastMove=d.lastMove||null;
+    names=d.names||{w:'',b:''};timerSetting=d.timerSetting||0;
+    clocks=d.clocks||{w:timerSetting*60,b:timerSetting*60};
     selected=null;moves=[];pendingPromotion=null;gameOver=false;animating=false;
     document.getElementById('endModal').classList.remove('open');
+    document.getElementById('clocks').classList.toggle('show',timerSetting>0);
+    renderClocks();startClock();
     syncToggles();render();updateSideUI();maybeBot();
   }catch(e){statusEl.textContent='That save could not be read.';}
 }
@@ -968,7 +1123,7 @@ function syncToggles(){
 }
 
 /* ---------- Start screen ---------- */
-let selMode='reef', selSide='w', selOpp='bot';
+let selMode='reef', selSide='w', selOpp='bot', selTime=0;
 function buildStart(){
   const mg=document.getElementById('modeGrid');mg.innerHTML='';
   for(const key of Object.keys(MODES)){
@@ -1006,9 +1161,36 @@ function buildStart(){
     b.onclick=()=>{botIndex=i;buildStart();};
     br.appendChild(b);
   });
+  /* names: with a bot, only one player types a name */
+  const lblW=document.getElementById('nameWLabel');
+  const wrapB=document.getElementById('nameBWrap');
+  if(selOpp==='bot'){
+    lblW.textContent=(selSide==='w'?'🐬':'🦈')+' Your name';
+    wrapB.style.display='none';
+  }else{
+    lblW.textContent='🐬 Dolphin player';
+    wrapB.style.display='';
+  }
+  const tg=document.getElementById('timeGrid');tg.innerHTML='';
+  for(const t of TIMES){
+    const b=document.createElement('button');
+    b.className='chooseCard'+(selTime===t.v?' on':'');
+    b.innerHTML=`<div class="big">${t.em}</div><div class="name">${t.name}</div>`;
+    b.onclick=()=>{selTime=t.v;buildStart();};
+    tg.appendChild(b);
+  }
 }
 document.getElementById('startBtn').onclick=()=>{
-  mode=selMode;playerSide=selSide;botOn=(selOpp==='bot');
+  mode=selMode;playerSide=selSide;botOn=(selOpp==='bot');timerSetting=selTime;
+  const nW=document.getElementById('nameW').value.trim();
+  const nB=document.getElementById('nameB').value.trim();
+  if(botOn){
+    names={w:'',b:''};
+    names[playerSide]=nW;
+    names[playerSide==='w'?'b':'w']=BOTS[botIndex].name;
+  }else{
+    names={w:nW,b:nB};
+  }
   document.getElementById('startModal').classList.remove('open');
   initial();
 };
@@ -1030,6 +1212,30 @@ document.getElementById('sfx').onclick=function(){sfxOn=!sfxOn;this.textContent=
 document.getElementById('music').onclick=toggleMusic;
 document.getElementById('save').onclick=saveGame;
 document.getElementById('load').onclick=loadGame;
+document.getElementById('resign').onclick=()=>{
+  if(gameOver||document.getElementById('startModal').classList.contains('open'))return;
+  const resigner=botOn?playerSide:turn;
+  const winner=resigner==='w'?'b':'w';
+  if(confirm(`${displayName(resigner)}, wave the white flag and resign?`)){
+    showEnd(winner,resigner,'resign');
+  }
+};
+const themeBtn=document.getElementById('theme');
+function applyTheme(dark){
+  document.body.classList.toggle('dark',dark);
+  themeBtn.textContent=dark?'☀️ Light mode':'🌙 Dark mode';
+  themeBtn.setAttribute('aria-pressed',dark);
+  try{localStorage.setItem('sharkChessTheme',dark?'dark':'light');}catch(e){}
+}
+themeBtn.onclick=()=>applyTheme(!document.body.classList.contains('dark'));
+try{applyTheme(localStorage.getItem('sharkChessTheme')==='dark');}catch(e){}
+
+/* PWA: register service worker (needs manifest.webmanifest, sw.js, icons alongside this file) */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
 
 /* ambient bubbles */
 (function(){
