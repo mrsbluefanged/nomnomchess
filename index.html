@@ -106,9 +106,9 @@
 
   /* animation overlay for chomps */
   .fxLayer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible}
-  .ghost{position:absolute;transition:left .28s ease, top .28s ease;z-index:6}
-  .ghost svg{width:100%;height:100%;filter:drop-shadow(0 3px 3px rgba(22,67,107,.3))}
-  .ghost.chomping{animation:chompWiggle .45s ease}
+  .fxGhost{position:absolute;transition:left .28s ease, top .28s ease;z-index:6}
+  .fxGhost svg{width:100%;height:100%;filter:drop-shadow(0 3px 3px rgba(22,67,107,.3))}
+  .fxGhost.chomping{animation:chompWiggle .45s ease}
   @keyframes chompWiggle{
     0%{transform:scale(1) rotate(0)}
     30%{transform:scale(1.28) rotate(-10deg)}
@@ -176,9 +176,13 @@
   .captured .mini svg{width:100%;height:100%}
   .rules{font-size:12.8px;line-height:1.55;color:#3d6d94;background:#f4fbff;padding:10px 12px;border-radius:14px;border:2px dashed #cbe5f3}
   .rules b{color:#20567f}
-  .legend{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;font-size:12.4px;color:#3d6d94;font-weight:600}
+  .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:6px 12px;font-size:12.4px;color:#3d6d94;font-weight:600}
   .legend .li{display:flex;align-items:center;gap:6px}
-  .legend .li svg{width:26px;height:26px;flex:0 0 auto}
+  .legend .li svg{width:28px;height:28px;flex:0 0 auto}
+  .legendCard{
+    margin:14px auto 0;width:min(92vw,680px);
+    background:#fdfeff;border:2px solid var(--border);border-radius:18px;padding:13px;box-shadow:var(--softshadow);
+  }
 
   /* modals */
   .modal{position:fixed;inset:0;background:#0b3a5cb8;display:none;align-items:center;justify-content:center;padding:20px;z-index:40}
@@ -301,6 +305,10 @@
       <div id="board" class="board" role="grid" aria-label="Ocean chess board"></div>
       <div class="fxLayer" id="fxLayer" aria-hidden="true"></div>
     </div>
+    <div class="legendCard">
+      <h3 class="sectionTitle">Who's who</h3>
+      <div class="legend" id="legend"></div>
+    </div>
   </main>
 
   <aside class="side">
@@ -347,11 +355,6 @@
           <div id="capW" class="captured" aria-label="Sharks captured by dolphins"></div>
         </div>
       </div>
-    </div>
-
-    <div class="sideSection">
-      <h3 class="sectionTitle">Who's who</h3>
-      <div class="legend" id="legend"></div>
     </div>
 
     <div class="sideSection">
@@ -652,7 +655,7 @@ function doMove(r,c,nr,nc){
 function animateGhost(p, target, from, to, done){
   const blind = (mode==='blind') && !reveal;
   const ghost=document.createElement('div');
-  ghost.className='ghost';
+  ghost.className='fxGhost';
   ghost.style.width=from.w*0.82+'px'; ghost.style.height=from.h*0.82+'px';
   ghost.style.left=(from.x+from.w*0.09)+'px'; ghost.style.top=(from.y+from.h*0.09)+'px';
   ghost.innerHTML=creatureSVG(p.t,p.c,{generic:blind});
