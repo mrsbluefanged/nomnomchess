@@ -1,5 +1,5 @@
-/* Shark vs Dolphin Chess — service worker */
-const CACHE = 'shark-chess-v1';
+/* Nom Nom Chess — service worker */
+const CACHE = 'nomnom-chess-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -22,7 +22,6 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-/* Cache-first, then network; refresh cache in the background when online */
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(

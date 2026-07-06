@@ -3,26 +3,23 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Shark vs Dolphin Chess</title>
+<title>Nom Nom Chess</title>
 <link rel="manifest" href="./manifest.webmanifest" />
 <meta name="theme-color" content="#16436b" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="SharkChess" />
+<meta name="apple-mobile-web-app-title" content="NomNomChess" />
 <link rel="apple-touch-icon" href="./icon-192.png" />
 <style>
   :root{
     --lagoon:#aee7f8;
     --shell:#fff9ee;
-    --sky:#dff6ff;
     --deepnavy:#16436b;
     --coral:#ff8fa3;
     --coral-dark:#e26a80;
     --sunny:#ffd66b;
     --seafoam:#8fe3c0;
-    --shark-body:#8db9d6;
-    --dolphin-body:#bfe6ff;
     --panel:#ffffff;
     --border:#cdeaf6;
     --radius:22px;
@@ -44,7 +41,6 @@
     padding:16px;
     overflow-x:hidden;
   }
-  /* floating ambient bubbles */
   .ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
   .ambient span{
     position:absolute;bottom:-40px;border-radius:50%;
@@ -60,35 +56,33 @@
 
   .app{position:relative;z-index:1;width:min(1180px,100%);margin:0 auto;display:grid;grid-template-columns:minmax(320px,1fr) 340px;gap:18px;align-items:start}
   header.top{grid-column:1/-1;text-align:center;padding:4px 0 2px}
-  h1{
-    margin:0;font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:.5px;
-    color:var(--deepnavy);
-    text-shadow:0 2px 0 #ffffff;
-  }
-  h1 .vs{
-    display:inline-block;background:var(--coral);color:#fff;font-size:.5em;
-    padding:.2em .6em;border-radius:999px;vertical-align:middle;transform:rotate(-4deg);
-    box-shadow:0 3px 0 var(--coral-dark);margin:0 .3em;
-  }
+  h1{margin:0;font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:.5px;color:var(--deepnavy);text-shadow:0 2px 0 #ffffff}
+  .nomWrap{display:inline-block;vertical-align:middle;transform:rotate(-4deg)}
+  .nomBadge{height:1.05em;width:auto;display:block;filter:drop-shadow(0 3px 0 var(--coral-dark));overflow:visible}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .tagline{margin:4px 0 0;font-size:14px;color:#3d6d94;font-weight:600}
 
   .mainCard,.side{background:var(--panel);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
   .mainCard{padding:16px}
+  .clocks{display:none;justify-content:space-between;gap:10px;margin:0 auto 12px;width:min(92vw,680px)}
+  .clocks.show{display:flex}
+  .clock{flex:1;text-align:center;font-weight:800;font-size:19px;padding:8px 10px;border-radius:16px;background:#f0faff;border:2.5px solid var(--border);color:#2c6a96;font-variant-numeric:tabular-nums}
+  .clock.active{background:#fff3d1;border-color:#ffd66b;color:#8a6410}
+  .clock.low{background:#ffe3e8;border-color:var(--coral);color:#c2374f;animation:pulse 1s ease-in-out infinite}
+
   .boardWrap{position:relative;margin:0 auto;width:min(92vw,680px)}
   .board{
     width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
     border:10px solid var(--deepnavy);border-radius:26px;overflow:hidden;background:#fff;
     box-shadow:0 14px 30px rgba(22,67,107,.22), inset 0 0 0 3px #ffffff66;
   }
-  .square{
-    position:relative;display:flex;align-items:center;justify-content:center;
-    user-select:none;cursor:pointer;border:0;padding:0;font-family:inherit;background:none;
-  }
+  .square{position:relative;display:flex;align-items:center;justify-content:center;user-select:none;cursor:pointer;border:0;padding:0;font-family:inherit;background:none}
   .square:focus-visible{outline:4px solid var(--sunny);outline-offset:-4px;z-index:3;border-radius:10px}
   .light{background:var(--shell)}
   .dark{background:var(--lagoon)}
   .square.selected{box-shadow:inset 0 0 0 5px var(--sunny);border-radius:12px}
   .square.lastMove::before{content:"";position:absolute;inset:0;background:#ffd66b33}
+  .square.reviewCap::after{content:"😋";font-size:min(4vw,26px);position:absolute;top:2px;right:4px}
   .square.move::after{
     content:"";width:30%;height:30%;border-radius:50%;position:absolute;
     background:var(--seafoam);border:3px solid #4bb98d;opacity:.95;
@@ -111,7 +105,6 @@
   }
   .showNames .badge{display:block}
 
-  /* animation overlay for chomps */
   .fxLayer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible}
   .fxGhost{position:absolute;transition:left .28s ease, top .28s ease;z-index:6}
   .fxGhost svg{width:100%;height:100%;filter:drop-shadow(0 3px 3px rgba(22,67,107,.3))}
@@ -147,7 +140,30 @@
     100%{transform:translate(var(--dx),var(--dy)) scale(1.15);opacity:0}
   }
 
-  /* sidebar */
+  /* setup toolbar (custom mode) */
+  .setupBar{display:none;margin:14px auto 0;width:min(92vw,680px);background:#fdfeff;border:2px solid var(--border);border-radius:18px;padding:13px;box-shadow:var(--softshadow)}
+  .setupBar.show{display:block}
+  .palRow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px;align-items:center}
+  .palLabel{font-size:12px;font-weight:800;color:#2c6a96;width:100%}
+  .palBtn{width:46px;height:46px;border-radius:12px;border:2.5px solid var(--border);background:#f6fcff;cursor:pointer;padding:3px;transition:transform .1s ease,border-color .1s ease}
+  .palBtn:hover{transform:translateY(-2px)}
+  .palBtn:focus-visible{outline:4px solid var(--sunny)}
+  .palBtn.on{border-color:var(--coral);background:#fff2f5}
+  .palBtn svg{width:100%;height:100%}
+  .palBtn.eraser{font-size:20px}
+  .setupActions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+
+  /* review bar */
+  .reviewBar{display:none;margin:14px auto 0;width:min(92vw,680px);background:#fdfeff;border:2px solid var(--border);border-radius:18px;padding:13px;box-shadow:var(--softshadow);text-align:center}
+  .reviewBar.show{display:block}
+  .reviewCaption{font-size:14px;font-weight:700;color:#2c6a96;margin:0 0 10px;min-height:20px}
+  .reviewBtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+  .legendCard{margin:14px auto 0;width:min(92vw,680px);background:#fdfeff;border:2px solid var(--border);border-radius:18px;padding:13px;box-shadow:var(--softshadow)}
+  .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:6px 12px;font-size:12.4px;color:#3d6d94;font-weight:600}
+  .legend .li{display:flex;align-items:center;gap:6px}
+  .legend .li svg{width:28px;height:28px;flex:0 0 auto}
+
   .side{padding:14px;display:flex;flex-direction:column;gap:12px}
   .statusCard{
     background:linear-gradient(180deg,#fff8e6,#ffefc4);
@@ -172,6 +188,9 @@
   button.btn.blue{background:#3fa9dd;box-shadow:0 4px 0 #2b7fae}
   button.btn.blue:hover{box-shadow:0 6px 0 #2b7fae}
   button.btn.blue:active{box-shadow:0 1px 0 #2b7fae}
+  button.btn.green{background:#4bb98d;box-shadow:0 4px 0 #35906c}
+  button.btn.green:hover{box-shadow:0 6px 0 #35906c}
+  button.btn.green:active{box-shadow:0 1px 0 #35906c}
   button.btn.ghost{background:#eef8fd;color:#2c6a96;box-shadow:0 4px 0 #cbe4f0}
   button.btn.ghost:hover{box-shadow:0 6px 0 #cbe4f0}
   button.btn.ghost:active{box-shadow:0 1px 0 #cbe4f0}
@@ -183,15 +202,7 @@
   .captured .mini svg{width:100%;height:100%}
   .rules{font-size:12.8px;line-height:1.55;color:#3d6d94;background:#f4fbff;padding:10px 12px;border-radius:14px;border:2px dashed #cbe5f3}
   .rules b{color:#20567f}
-  .legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:6px 12px;font-size:12.4px;color:#3d6d94;font-weight:600}
-  .legend .li{display:flex;align-items:center;gap:6px}
-  .legend .li svg{width:28px;height:28px;flex:0 0 auto}
-  .legendCard{
-    margin:14px auto 0;width:min(92vw,680px);
-    background:#fdfeff;border:2px solid var(--border);border-radius:18px;padding:13px;box-shadow:var(--softshadow);
-  }
 
-  /* modals */
   .modal{position:fixed;inset:0;background:#0b3a5cb8;display:none;align-items:center;justify-content:center;padding:16px;z-index:40;overflow-y:auto}
   .modal.open{display:flex}
   .modalCard{
@@ -211,11 +222,12 @@
   .promoBtn svg{width:52px;height:52px}
   .promoBtn span{font-size:12.5px;font-weight:800;color:var(--deepnavy)}
 
-  /* start screen */
-  .startCard{max-width:640px;text-align:left}
+  .startCard{max-width:660px;text-align:left}
   .startCard h2{text-align:center;font-size:28px}
   .startCard .sub{text-align:center}
   .chooseGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+  .chooseGrid.twoCol{grid-template-columns:1fr 1fr}
+  .chooseGrid.fourCol{grid-template-columns:repeat(4,1fr)}
   .chooseCard{
     border:3px solid var(--border);background:#f7fcff;border-radius:18px;padding:12px 10px;cursor:pointer;font-family:inherit;
     text-align:center;transition:transform .1s ease, border-color .1s ease, background .1s ease;
@@ -227,7 +239,13 @@
   .chooseCard .name{font-weight:800;font-size:14.5px;margin-top:3px}
   .chooseCard .desc{font-size:11.5px;color:#5b86a8;font-weight:600;margin-top:2px;line-height:1.35}
   .chooseTitle{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#2c6a96;font-weight:800;margin:0 0 7px}
-  .twoCol{grid-template-columns:1fr 1fr}
+  .teamRow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px}
+  .teamCard{border:3px solid var(--border);background:#f7fcff;border-radius:14px;padding:8px 2px;cursor:pointer;font-family:inherit;text-align:center;transition:transform .1s ease,border-color .1s ease}
+  .teamCard:hover{transform:translateY(-2px)}
+  .teamCard:focus-visible{outline:4px solid var(--sunny)}
+  .teamCard.on{border-color:var(--coral);background:#fff2f5}
+  .teamCard .em{font-size:24px}
+  .teamCard .nm{font-size:9.5px;font-weight:800;line-height:1.15;margin-top:2px}
   .botRow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}
   .botCard{border:3px solid var(--border);background:#f7fcff;border-radius:14px;padding:8px 4px;cursor:pointer;font-family:inherit;text-align:center;transition:transform .1s ease,border-color .1s ease}
   .botCard:hover{transform:translateY(-2px)}
@@ -236,8 +254,12 @@
   .botCard .em{font-size:22px}
   .botCard .nm{font-size:10.5px;font-weight:800;line-height:1.2;margin-top:2px}
   .botCard .lv{font-size:9.5px;color:#5b86a8;font-weight:700}
+  .botCard .ps{font-size:9px;color:#8aa9c0;font-weight:600;line-height:1.2;margin-top:2px}
+  .nameRow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;text-align:left}
+  .nameRow label{display:block;font-size:12px;font-weight:800;color:#2c6a96;margin-bottom:4px}
+  .nameInput{width:100%;padding:10px 12px;border-radius:14px;border:2.5px solid var(--border);font-family:inherit;font-weight:700;font-size:14px;color:var(--deepnavy);background:#f7fcff}
+  .nameInput:focus-visible{outline:4px solid var(--sunny);border-color:var(--coral)}
 
-  /* end scene */
   .endScene{
     position:relative;height:210px;border-radius:20px;overflow:hidden;margin:12px 0 14px;
     background:
@@ -259,63 +281,55 @@
     0%{transform:translateX(0) rotate(0)}
     30%{transform:translateX(120px) translateY(-6px) rotate(-4deg)}
     55%{transform:translateX(250px) translateY(4px) rotate(2deg)}
-    68%{transform:translateX(300px) rotate(-12deg) scale(1.12)}
-    76%{transform:translateX(305px) rotate(8deg) scale(1.16)}
+    64%{transform:translateX(295px) rotate(-14deg) scale(1.14)}
+    72%{transform:translateX(302px) rotate(10deg) scale(1.2)}
+    80%{transform:translateX(298px) rotate(-8deg) scale(1.16)}
     100%{transform:translateX(295px) rotate(0) scale(1.05)}
   }
   @keyframes loserFlee{
     0%,45%{transform:translateX(0) scale(1);opacity:1}
-    58%{transform:translateX(-8px) rotate(-8deg)}
-    66%{transform:translateX(6px) rotate(8deg)}
-    74%{transform:translateX(0) scale(.7);opacity:1}
-    86%{transform:translateY(-6px) scale(.3);opacity:.8}
+    56%{transform:translateX(-10px) rotate(-8deg)}
+    62%{transform:translateX(8px) rotate(8deg)}
+    70%{transform:translateX(0) scale(.72);opacity:1}
+    82%{transform:translateY(-4px) scale(.34);opacity:.8}
     100%{transform:scale(.02);opacity:0}
   }
   .gulpText{
-    position:absolute;left:64%;top:60px;transform:translateX(-50%);z-index:3;
+    position:absolute;left:64%;top:56px;transform:translateX(-50%);z-index:3;
     background:#fff;color:var(--coral-dark);font-weight:800;font-size:19px;padding:6px 15px;border-radius:999px;
-    border:3px solid var(--coral);opacity:0;animation:gulpPop 3s ease forwards;
+    border:3px solid var(--coral);opacity:0;animation:gulpPop 3.2s ease forwards;
   }
-  @keyframes gulpPop{0%,68%{opacity:0;transform:translateX(-50%) scale(.4)}76%{opacity:1;transform:translateX(-50%) scale(1.2)}88%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-16px) scale(.9)}}
+  @keyframes gulpPop{0%,62%{opacity:0;transform:translateX(-50%) scale(.4)}70%{opacity:1;transform:translateX(-50%) scale(1.2)}76%{transform:translateX(-50%) scale(.95)}82%{transform:translateX(-50%) scale(1.15)}92%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-16px) scale(.9)}}
   .heartBurp{position:absolute;left:66%;top:56px;font-size:24px;z-index:3;opacity:0;animation:heartUp 3.4s ease forwards}
   @keyframes heartUp{0%,80%{opacity:0;transform:translateY(0) scale(.4)}88%{opacity:1;transform:translateY(-14px) scale(1.1)}100%{opacity:0;transform:translateY(-34px) scale(1)}}
   .endTitle{font-size:38px;font-weight:800;color:var(--deepnavy);margin:0}
   .endSub{font-size:15px;color:#3d6d94;margin:4px 0 0;font-weight:600}
+  .endBtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 
-  @media(max-width:980px){
-    .app{grid-template-columns:1fr}
-  }
+  @media(max-width:980px){.app{grid-template-columns:1fr}}
   @media(max-width:560px){
     body{padding:10px}
     .chooseGrid{grid-template-columns:1fr}
+    .chooseGrid.twoCol{grid-template-columns:1fr 1fr}
     .chooseGrid.fourCol{grid-template-columns:repeat(2,1fr)}
+    .teamRow{grid-template-columns:repeat(4,1fr)}
     .botRow{grid-template-columns:repeat(3,1fr)}
     .buttonRow{grid-template-columns:1fr}
     .endTitle{font-size:30px}
+    .endBtns{grid-template-columns:1fr}
     .swimmer{width:84px;height:84px}
     .runner{width:66px;height:66px}
     .nameRow{grid-template-columns:1fr}
+    .setupActions{grid-template-columns:1fr}
+    .reviewBtns{grid-template-columns:1fr 1fr 1fr}
     @keyframes winnerChase{
       0%{transform:translateX(0)}
       55%{transform:translateX(150px)}
-      68%{transform:translateX(185px) rotate(-12deg) scale(1.12)}
+      64%{transform:translateX(182px) rotate(-14deg) scale(1.14)}
+      72%{transform:translateX(188px) rotate(10deg) scale(1.2)}
       100%{transform:translateX(180px) scale(1.05)}
     }
   }
-
-  /* clocks */
-  .clocks{display:none;justify-content:space-between;gap:10px;margin:0 auto 12px;width:min(92vw,680px)}
-  .clocks.show{display:flex}
-  .clock{flex:1;text-align:center;font-weight:800;font-size:19px;padding:8px 10px;border-radius:16px;background:#f0faff;border:2.5px solid var(--border);color:#2c6a96;font-variant-numeric:tabular-nums}
-  .clock.active{background:#fff3d1;border-color:#ffd66b;color:#8a6410}
-  .clock.low{background:#ffe3e8;border-color:var(--coral);color:#c2374f;animation:pulse 1s ease-in-out infinite}
-
-  /* name inputs & time grid */
-  .nameRow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;text-align:left}
-  .nameRow label{display:block;font-size:12px;font-weight:800;color:#2c6a96;margin-bottom:4px}
-  .nameInput{width:100%;padding:10px 12px;border-radius:14px;border:2.5px solid var(--border);font-family:inherit;font-weight:700;font-size:14px;color:var(--deepnavy);background:#f7fcff}
-  .nameInput:focus-visible{outline:4px solid var(--sunny);border-color:var(--coral)}
-  .chooseGrid.fourCol{grid-template-columns:repeat(4,1fr)}
 
   /* dark mode: deep sea night */
   body.dark{
@@ -327,8 +341,8 @@
   body.dark h1{color:#eaf6ff;text-shadow:0 2px 0 #05182b}
   body.dark .tagline{color:#9cc3dd}
   body.dark .mainCard,body.dark .side{background:#0e3253;border-color:#1e4d75}
-  body.dark .sideSection,body.dark .legendCard{background:#123a5f;border-color:#1e4d75;box-shadow:0 5px 14px rgba(0,0,0,.3)}
-  body.dark .sectionTitle,body.dark .chooseTitle,body.dark .nameRow label{color:#9fd2f0}
+  body.dark .sideSection,body.dark .legendCard,body.dark .setupBar,body.dark .reviewBar{background:#123a5f;border-color:#1e4d75;box-shadow:0 5px 14px rgba(0,0,0,.3)}
+  body.dark .sectionTitle,body.dark .chooseTitle,body.dark .nameRow label,body.dark .palLabel,body.dark .reviewCaption{color:#9fd2f0}
   body.dark .statusCard{background:linear-gradient(180deg,#33406b,#28325a);border-color:#4b5a95}
   body.dark .statusLabel{color:#aebdf5}
   body.dark .status{color:#eef1ff}
@@ -348,10 +362,10 @@
   body.dark .modalCard{background:#123a5f;border-color:#1e4d75;color:#dcecf8}
   body.dark .modalCard h2,body.dark .endTitle{color:#eaf6ff}
   body.dark .modalCard p,body.dark .endSub{color:#9cc3dd}
-  body.dark .chooseCard,body.dark .botCard,body.dark .promoBtn{background:#0e3253;border-color:#1e4d75}
-  body.dark .chooseCard .name,body.dark .botCard .nm,body.dark .promoBtn span{color:#eaf6ff}
-  body.dark .chooseCard .desc,body.dark .botCard .lv{color:#8fb8d4}
-  body.dark .chooseCard.on,body.dark .botCard.on{background:#4a2438;border-color:var(--coral)}
+  body.dark .chooseCard,body.dark .botCard,body.dark .teamCard,body.dark .promoBtn,body.dark .palBtn{background:#0e3253;border-color:#1e4d75}
+  body.dark .chooseCard .name,body.dark .botCard .nm,body.dark .teamCard .nm,body.dark .promoBtn span{color:#eaf6ff}
+  body.dark .chooseCard .desc,body.dark .botCard .lv,body.dark .botCard .ps{color:#8fb8d4}
+  body.dark .chooseCard.on,body.dark .botCard.on,body.dark .teamCard.on,body.dark .palBtn.on{background:#4a2438;border-color:var(--coral)}
   body.dark .nameInput{background:#0e3253;border-color:#1e4d75;color:#eaf6ff}
   body.dark .clock{background:#0e3253;border-color:#1e4d75;color:#9fd2f0}
   body.dark .clock.active{background:#4a3d12;border-color:#ffd66b;color:#ffe6a1}
@@ -363,19 +377,52 @@
 
 <div class="app">
   <header class="top">
-    <h1>🦈 Sharks <span class="vs">VS</span> Dolphins 🐬</h1>
-    <p class="tagline" id="tagline">A cute ocean chess adventure</p>
+    <h1>Nom <span class="nomWrap"><svg class="nomBadge" viewBox="0 0 92 42" aria-hidden="true">
+      <defs>
+        <mask id="biteMask">
+          <rect x="1" y="3" width="90" height="38" rx="19" fill="#fff"/>
+          <circle cx="76" cy="3" r="10" fill="#000"/>
+          <circle cx="87" cy="12" r="8" fill="#000"/>
+          <circle cx="66" cy="0" r="7" fill="#000"/>
+        </mask>
+      </defs>
+      <rect x="1" y="3" width="90" height="38" rx="19" fill="var(--coral)" mask="url(#biteMask)"/>
+      <text x="40" y="30" text-anchor="middle" font-weight="800" font-size="21" fill="#ffffff" font-family="inherit" letter-spacing="1">NOM</text>
+      <circle cx="84" cy="24" r="2" fill="var(--coral)"/>
+      <circle cx="89" cy="18" r="1.4" fill="var(--coral)"/>
+    </svg><span class="sr">Nom</span></span> Chess</h1>
+    <p class="tagline" id="tagline">Pick your predators. Chomp your way to checkmate!</p>
   </header>
 
   <main class="mainCard">
     <div class="clocks" id="clocks" aria-live="off">
-      <div class="clock" id="clockW">🐬 --:--</div>
-      <div class="clock" id="clockB">🦈 --:--</div>
+      <div class="clock" id="clockW">--:--</div>
+      <div class="clock" id="clockB">--:--</div>
     </div>
     <div class="boardWrap">
-      <div id="board" class="board" role="grid" aria-label="Ocean chess board"></div>
+      <div id="board" class="board" role="grid" aria-label="Nom Nom Chess board"></div>
       <div class="fxLayer" id="fxLayer" aria-hidden="true"></div>
     </div>
+
+    <div class="setupBar" id="setupBar">
+      <h3 class="sectionTitle">🛠️ Build your board</h3>
+      <div id="palettes"></div>
+      <div class="setupActions">
+        <button class="btn ghost" id="setupStandard">✨ Standard setup</button>
+        <button class="btn ghost" id="setupClear">🧹 Clear board</button>
+        <button class="btn green" id="setupStart">✅ Start game</button>
+      </div>
+    </div>
+
+    <div class="reviewBar" id="reviewBar">
+      <p class="reviewCaption" id="reviewCaption" aria-live="polite"></p>
+      <div class="reviewBtns">
+        <button class="btn ghost" id="revBack">◀ Back</button>
+        <button class="btn ghost" id="revNext">Next ▶</button>
+        <button class="btn blue" id="revDone">↩ Done</button>
+      </div>
+    </div>
+
     <div class="legendCard">
       <h3 class="sectionTitle">Who's who</h3>
       <div class="legend" id="legend"></div>
@@ -387,7 +434,7 @@
       <div class="face" id="statusFace">🐬</div>
       <div>
         <div class="statusLabel">Whose turn?</div>
-        <div class="status" id="status">Dolphins swim first</div>
+        <div class="status" id="status">Loading…</div>
       </div>
     </div>
 
@@ -411,10 +458,11 @@
           <button class="btn ghost" id="theme" aria-pressed="false">🌙 Dark mode</button>
           <button class="btn ghost" id="resign">🏳️ Resign</button>
         </div>
+        <button class="btn ghost" id="reviewBtn" style="display:none">🎬 Review game</button>
       </div>
       <div style="margin-top:10px">
-        <span class="pill" id="modePill">🐚 Reef Chess</span>
-        <span class="pill" id="botPill" style="margin-top:6px">🤖 Bot off</span>
+        <span class="pill" id="modePill">🐚 Normal Chess</span>
+        <span class="pill" id="botPill" style="margin-top:6px">🤖</span>
       </div>
     </div>
 
@@ -422,12 +470,12 @@
       <h3 class="sectionTitle">Snack tally</h3>
       <div class="capturedRow">
         <div>
-          <div class="capturedLabel">🦈 Sharks ate…</div>
-          <div id="capB" class="captured" aria-label="Dolphins captured by sharks"></div>
+          <div class="capturedLabel" id="capBLabel">Team 2 ate…</div>
+          <div id="capB" class="captured"></div>
         </div>
         <div>
-          <div class="capturedLabel">🐬 Dolphins ate…</div>
-          <div id="capW" class="captured" aria-label="Sharks captured by dolphins"></div>
+          <div class="capturedLabel" id="capWLabel">Team 1 ate…</div>
+          <div id="capW" class="captured"></div>
         </div>
       </div>
     </div>
@@ -439,32 +487,40 @@
   </aside>
 </div>
 
-<!-- Start / mode select -->
+<!-- Start / setup screen -->
 <div class="modal open" id="startModal" role="dialog" aria-modal="true" aria-labelledby="startTitle">
   <div class="modalCard startCard">
-    <h2 id="startTitle">🌊 Pick your adventure!</h2>
-    <p class="sub">Choose a game mode, your team, and a swim buddy.</p>
+    <h2 id="startTitle">😋 Pick your adventure!</h2>
+    <p class="sub">Choose a game mode, your predator team, and an Alpha Predator to face.</p>
 
     <p class="chooseTitle">Game mode</p>
-    <div class="chooseGrid" id="modeGrid"></div>
+    <div class="chooseGrid fourCol" id="modeGrid"></div>
 
-    <p class="chooseTitle">Play as</p>
-    <div class="chooseGrid twoCol" id="sideGrid"></div>
+    <p class="chooseTitle" id="teamMeTitle">Your team</p>
+    <div class="teamRow" id="teamMeRow"></div>
+
+    <p class="chooseTitle" id="teamOppTitle">Opponent team</p>
+    <div class="teamRow" id="teamOppRow"></div>
 
     <p class="chooseTitle">Opponent</p>
     <div class="chooseGrid twoCol" id="oppGrid"></div>
     <div class="botRow" id="botRow" style="display:none"></div>
 
+    <div id="firstBlock">
+      <p class="chooseTitle">Who moves first?</p>
+      <div class="chooseGrid twoCol" id="firstGrid"></div>
+    </div>
+
     <div id="nameBlock">
       <p class="chooseTitle">Player names (optional)</p>
       <div class="nameRow">
         <div>
-          <label for="nameW" id="nameWLabel">🐬 Dolphin player</label>
-          <input id="nameW" class="nameInput" maxlength="16" placeholder="Dolphins" autocomplete="off" />
+          <label for="nameMe" id="nameMeLabel">Your name</label>
+          <input id="nameMe" class="nameInput" maxlength="16" placeholder="Player 1" autocomplete="off" />
         </div>
-        <div id="nameBWrap">
-          <label for="nameB">🦈 Shark player</label>
-          <input id="nameB" class="nameInput" maxlength="16" placeholder="Sharks" autocomplete="off" />
+        <div id="nameOppWrap">
+          <label for="nameOpp" id="nameOppLabel">Friend's name</label>
+          <input id="nameOpp" class="nameInput" maxlength="16" placeholder="Player 2" autocomplete="off" />
         </div>
       </div>
     </div>
@@ -472,7 +528,10 @@
     <p class="chooseTitle">Time limit</p>
     <div class="chooseGrid fourCol" id="timeGrid" style="margin-bottom:14px"></div>
 
-    <button class="btn" id="startBtn" style="font-size:17px;padding:14px">🐟 Dive in!</button>
+    <p class="chooseTitle">Music</p>
+    <div class="chooseGrid twoCol" id="musicGrid" style="margin-bottom:14px"></div>
+
+    <button class="btn" id="startBtn" style="font-size:17px;padding:14px">🍽️ Let's nom!</button>
   </div>
 </div>
 
@@ -492,8 +551,9 @@
     <p class="endSub" id="endSub"></p>
     <div class="endScene" id="endScene"></div>
     <p id="endText" style="color:#3d6d94;font-weight:600;font-size:14px;margin:0 0 14px"></p>
-    <div class="buttonRow">
+    <div class="endBtns">
       <button class="btn" id="again">🌊 Play again</button>
+      <button class="btn blue" id="endReview">🎬 Review game</button>
       <button class="btn ghost" id="exitEnd">👀 Peek at board</button>
     </div>
   </div>
@@ -502,220 +562,494 @@
 <script>
 "use strict";
 /* ============================================================
-   SHARK vs DOLPHIN CHESS — cute ocean edition
-   Modes: reef (standard species), blind (mystery deep), wild (variant)
+   NOM NOM CHESS — cute predator chess
+   Modes: normal, blind (Mystery Mode), wild (Chess variant), custom
+   Full rules: castling, en passant, promotion, check(mate), stalemate
    ============================================================ */
 
-/* ---------- Creature art (inline SVG) ---------- */
-/* Each creature is a cute rounded fish built from shared parts. */
-function creatureSVG(type, side, opts = {}) {
-  const S = SPECIES[side][type] || SPECIES[side].p;
-  const body   = opts.generic ? (side === 'b' ? '#7f9db8' : '#bfe6ff') : S.body;
-  const belly  = opts.generic ? '#eef7ff' : S.belly;
-  const scale  = opts.generic ? 1 : (S.scale || 1);
-  const snout  = opts.generic ? (side === 'b' ? 'pointy' : 'long') : (S.snout || 'round');
-  const pattern= opts.generic ? 'none' : (S.pattern || 'none');
-  const acc    = opts.generic ? 'none' : (S.acc || 'none');
-  const isShark = side === 'b';
-
-  let head = '';
-  if (snout === 'hammer') {
-    head = `<rect x="70" y="30" width="16" height="42" rx="8" fill="${body}"/>
-            <circle cx="78" cy="36" r="5.5" fill="#fff"/><circle cx="79.5" cy="36" r="3" fill="#16436b"/><circle cx="78.6" cy="34.8" r="1.1" fill="#fff"/>
-            <circle cx="78" cy="66" r="5.5" fill="#fff"/><circle cx="79.5" cy="66" r="3" fill="#16436b"/><circle cx="78.6" cy="64.8" r="1.1" fill="#fff"/>`;
-  } else if (snout === 'saw') {
-    head = `<rect x="80" y="47" width="18" height="7" rx="3.5" fill="${body}"/>
-            <path d="M82 47 l2 -3 l2 3 M87 47 l2 -3 l2 3 M92 47 l2 -3 l2 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
-  } else if (snout === 'long') {
-    head = `<path d="M80 50 Q92 47 96 51 Q92 56 80 55 Z" fill="${body}"/>`;
-  } else if (snout === 'melon') {
-    head = `<circle cx="72" cy="42" r="12" fill="${body}"/>`;
-  }
-
-  let pat = '';
-  if (pattern === 'spots') pat = `<g fill="#ffffffcc"><circle cx="38" cy="40" r="2.4"/><circle cx="50" cy="36" r="2.2"/><circle cx="60" cy="42" r="2.4"/><circle cx="44" cy="50" r="2"/><circle cx="56" cy="52" r="2.2"/><circle cx="34" cy="52" r="1.8"/></g>`;
-  if (pattern === 'stripes') pat = `<g stroke="#ffffffaa" stroke-width="2.4" stroke-linecap="round"><path d="M40 34 Q42 48 40 62"/><path d="M52 33 Q54 48 52 63"/><path d="M63 36 Q65 48 63 60"/></g>`;
-  if (pattern === 'patch') pat = `<ellipse cx="66" cy="40" rx="8" ry="5.5" fill="#fff"/>`;
-  if (pattern === 'freckles') pat = `<g fill="#e88aa0"><circle cx="66" cy="52" r="1.3"/><circle cx="70" cy="54" r="1.3"/><circle cx="68" cy="49.5" r="1.2"/></g>`;
-
-  let accessory = '';
-  if (acc === 'crown') accessory = `<g transform="translate(52,10)"><path d="M0 14 L4 2 L10 10 L16 0 L22 10 L28 2 L32 14 Z" fill="#ffd66b" stroke="#e0a92f" stroke-width="1.6" stroke-linejoin="round"/><circle cx="16" cy="7" r="2.4" fill="#ff8fa3"/></g>`;
-  if (acc === 'tiara') accessory = `<g transform="translate(54,12)"><path d="M2 12 Q14 -6 26 12 Z" fill="#ffd66b" stroke="#e0a92f" stroke-width="1.5"/><circle cx="14" cy="5" r="3" fill="#8fe3c0" stroke="#4bb98d"/></g>`;
-  if (acc === 'pacifier') accessory = `<g transform="translate(80,56)"><circle cx="4" cy="4" r="4.4" fill="#ff8fa3" stroke="#e26a80" stroke-width="1.4"/><circle cx="4" cy="4" r="1.6" fill="#ffd1da"/></g>`;
-  if (acc === 'bow') accessory = `<g transform="translate(44,16)"><path d="M8 6 L0 0 L0 12 Z" fill="#ff8fa3"/><path d="M8 6 L16 0 L16 12 Z" fill="#ff8fa3"/><circle cx="8" cy="6" r="2.6" fill="#e26a80"/></g>`;
-  if (acc === 'star') accessory = `<g transform="translate(46,10)" fill="#ffd66b" stroke="#e0a92f" stroke-width="1.2"><path d="M8 0 L10 5.5 L16 6 L11.5 9.8 L13 16 L8 12.6 L3 16 L4.5 9.8 L0 6 L6 5.5 Z"/></g>`;
-  if (acc === 'swirl') accessory = `<path d="M20 22 Q30 14 40 20" stroke="#ffffffbb" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M16 30 Q28 22 40 28" stroke="#ffffff77" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
-  if (acc === 'horn') accessory = `<path d="M82 44 L100 34" stroke="#f2e3c4" stroke-width="4.5" stroke-linecap="round"/><path d="M84 43.4 L98 35" stroke="#d9c39a" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3 3"/>`;
-
-  const eye = (snout === 'hammer') ? '' :
-    `<circle cx="70" cy="42" r="6.5" fill="#fff"/>
-     <circle cx="71.8" cy="42.6" r="3.6" fill="#16436b"/>
-     <circle cx="70.7" cy="41.2" r="1.4" fill="#fff"/>`;
-
-  const mouth = isShark
-    ? `<path d="M84 56 Q78 61 70 58" stroke="#16436b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-       <path d="M76 58.6 l1.6 2.6 l1.8 -2.2" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
-    : `<path d="M84 56 Q79 61 72 58" stroke="#16436b" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
-
-  const blush = `<ellipse cx="62" cy="52" rx="3.6" ry="2.2" fill="#ff9fb2" opacity="${isShark ? .55 : .8}"/>`;
-
-  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
-    <g transform="translate(50 52) scale(${scale}) translate(-50 -52)">
-      <!-- tail -->
-      <path d="M20 44 Q6 32 4 26 Q14 36 20 38 Z" fill="${body}"/>
-      <path d="M20 60 Q6 72 4 78 Q14 68 20 66 Z" fill="${body}"/>
-      <!-- body -->
-      <path d="M14 52 Q16 30 46 27 Q76 25 88 48 Q90 52 88 56 Q76 79 46 77 Q16 74 14 52 Z" fill="${body}"/>
-      <!-- belly -->
-      <path d="M26 60 Q46 74 78 62 Q60 76 40 73 Q28 70 26 60 Z" fill="${belly}"/>
-      <!-- dorsal fin -->
-      <path d="M44 29 Q48 10 62 24 Q52 22 46 30 Z" fill="${body}" stroke="${body}" stroke-width="1"/>
-      <!-- side fin -->
-      <path d="M46 58 Q54 70 44 72 Q40 64 46 58 Z" fill="${belly}" opacity=".9"/>
-      ${pat}${head}${eye}${mouth}${blush}${accessory}
-    </g>
-  </svg>`;
-}
-
-/* Species table: piece letter -> art + friendly name, per side */
-const SPECIES = {
-  b: { /* sharks */
-    p: {name:'Baby Shark',    body:'#9fc6de', belly:'#eaf6fd', scale:.78, acc:'pacifier'},
-    r: {name:'Hammerhead',    body:'#7fa8c4', belly:'#e3f1fa', snout:'hammer'},
-    n: {name:'Mako Shark',    body:'#6f9fd0', belly:'#e3f1fa', acc:'swirl'},
-    b: {name:'Thresher',      body:'#8fb4d8', belly:'#eaf4fc', snout:'pointy', acc:'star'},
-    q: {name:'Whale Shark',   body:'#6d8fb8', belly:'#e6f2fb', pattern:'spots', scale:1.12, acc:'tiara'},
-    k: {name:'Great White',   body:'#8aa9c0', belly:'#f2f8fd', scale:1.1, acc:'crown'},
-    a: {name:'Megalodon',     body:'#5f7f9f', belly:'#dfeefa', scale:1.16, acc:'tiara'},
-    c: {name:'Tiger Shark',   body:'#7ba3bf', belly:'#e8f3fa', pattern:'stripes'},
-    h: {name:'Sawshark',      body:'#8fb0cc', belly:'#eaf4fc', snout:'saw'},
-    d: {name:'Goblin Shark',  body:'#b3a0c9', belly:'#efe8f7', snout:'pointy'},
-    m: {name:'Zebra Shark',   body:'#a3b8a0', belly:'#ecf4ea', pattern:'stripes', acc:'bow'},
-  },
-  w: { /* dolphins */
-    p: {name:'Baby Dolphin',  body:'#cfeaff', belly:'#f4fbff', scale:.78, acc:'pacifier'},
-    r: {name:'Orca',          body:'#3c5a75', belly:'#ffffff', pattern:'patch'},
-    n: {name:'Spinner',       body:'#a8dcf5', belly:'#f0faff', acc:'swirl'},
-    b: {name:'River Dolphin', body:'#ffc4d0', belly:'#ffeef2', snout:'long', pattern:'freckles'},
-    q: {name:'Pilot Whale',   body:'#6c7f9d', belly:'#e9eef7', snout:'melon', scale:1.12, acc:'tiara'},
-    k: {name:'Bottlenose',    body:'#9fd2f0', belly:'#f0faff', scale:1.1, acc:'crown'},
-    a: {name:'Super Orca',    body:'#2f4a63', belly:'#ffffff', pattern:'patch', scale:1.16, acc:'tiara'},
-    c: {name:'Beluga',        body:'#eef6fb', belly:'#ffffff', snout:'melon'},
-    h: {name:'Narwhal',       body:'#bcd3e8', belly:'#f0f7fd', acc:'horn'},
-    d: {name:'Dusky Dolphin', body:'#8fb8d8', belly:'#eaf4fc', pattern:'stripes'},
-    m: {name:'Spotted',       body:'#b9d8ea', belly:'#f0f8fd', pattern:'spots', acc:'bow'},
-  }
-};
+/* ================= THEMES & ART ================= */
 const ROLE = {k:'King',q:'Queen',r:'Rook',b:'Bishop',n:'Knight',p:'Pawn',a:'Amazon',c:'Chancellor',h:'Archbishop',m:'Camel',d:'Nightrider'};
 
-/* ---------- Game modes & bots ---------- */
-const MODES = {
-  reef:  {emoji:'🐚', name:'Reef Chess',   desc:'Classic chess — every piece is its own cute species!'},
-  blind: {emoji:'🌫️', name:'Mystery Deep', desc:'Everyone looks the same. Remember who is who!'},
-  wild:  {emoji:'🌀', name:'Wild Waters (Chess variant)',  desc:'Special super-pieces with wild new moves!'}
+/* Accessory drawing at top-center of a 100x100 token */
+function accSVG(acc, x=50, y=12){
+  if(acc==='crown')return `<g transform="translate(${x-16},${y-4})"><path d="M0 14 L4 2 L10 10 L16 0 L22 10 L28 2 L32 14 Z" fill="#ffd66b" stroke="#e0a92f" stroke-width="1.6" stroke-linejoin="round"/><circle cx="16" cy="7" r="2.4" fill="#ff8fa3"/></g>`;
+  if(acc==='tiara')return `<g transform="translate(${x-14},${y-2})"><path d="M2 12 Q14 -6 26 12 Z" fill="#ffd66b" stroke="#e0a92f" stroke-width="1.5"/><circle cx="14" cy="5" r="3" fill="#8fe3c0" stroke="#4bb98d"/></g>`;
+  if(acc==='star')return `<g transform="translate(${x-8},${y-4})" fill="#ffd66b" stroke="#e0a92f" stroke-width="1.2"><path d="M8 0 L10 5.5 L16 6 L11.5 9.8 L13 16 L8 12.6 L3 16 L4.5 9.8 L0 6 L6 5.5 Z"/></g>`;
+  if(acc==='bow')return `<g transform="translate(${x-8},${y-2})"><path d="M8 6 L0 0 L0 12 Z" fill="#ff8fa3"/><path d="M8 6 L16 0 L16 12 Z" fill="#ff8fa3"/><circle cx="8" cy="6" r="2.6" fill="#e26a80"/></g>`;
+  return '';
+}
+
+/* Fish base (sharks & dolphins) */
+function fishSVG(P, isShark){
+  const body=P.body, belly=P.belly, scale=P.scale||1, snout=P.snout||'round', pattern=P.pattern||'none', acc=P.acc||'none';
+  let head='';
+  if(snout==='hammer'){
+    head=`<rect x="70" y="30" width="16" height="42" rx="8" fill="${body}"/>
+      <circle cx="78" cy="36" r="5.5" fill="#fff"/><circle cx="79.5" cy="36" r="3" fill="#16436b"/><circle cx="78.6" cy="34.8" r="1.1" fill="#fff"/>
+      <circle cx="78" cy="66" r="5.5" fill="#fff"/><circle cx="79.5" cy="66" r="3" fill="#16436b"/><circle cx="78.6" cy="64.8" r="1.1" fill="#fff"/>`;
+  }else if(snout==='saw'){
+    head=`<rect x="80" y="47" width="18" height="7" rx="3.5" fill="${body}"/>
+      <path d="M82 47 l2 -3 l2 3 M87 47 l2 -3 l2 3 M92 47 l2 -3 l2 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+  }else if(snout==='long'){
+    head=`<path d="M80 50 Q92 47 96 51 Q92 56 80 55 Z" fill="${body}"/>`;
+  }else if(snout==='melon'){
+    head=`<circle cx="72" cy="42" r="12" fill="${body}"/>`;
+  }
+  let pat='';
+  if(pattern==='spots')pat=`<g fill="#ffffffcc"><circle cx="38" cy="40" r="2.4"/><circle cx="50" cy="36" r="2.2"/><circle cx="60" cy="42" r="2.4"/><circle cx="44" cy="50" r="2"/><circle cx="56" cy="52" r="2.2"/><circle cx="34" cy="52" r="1.8"/></g>`;
+  if(pattern==='stripes')pat=`<g stroke="#ffffffaa" stroke-width="2.4" stroke-linecap="round"><path d="M40 34 Q42 48 40 62"/><path d="M52 33 Q54 48 52 63"/><path d="M63 36 Q65 48 63 60"/></g>`;
+  if(pattern==='patch')pat=`<ellipse cx="66" cy="40" rx="8" ry="5.5" fill="#fff"/>`;
+  if(pattern==='freckles')pat=`<g fill="#e88aa0"><circle cx="66" cy="52" r="1.3"/><circle cx="70" cy="54" r="1.3"/><circle cx="68" cy="49.5" r="1.2"/></g>`;
+  let extra='';
+  if(acc==='pacifier')extra=`<g transform="translate(80,56)"><circle cx="4" cy="4" r="4.4" fill="#ff8fa3" stroke="#e26a80" stroke-width="1.4"/><circle cx="4" cy="4" r="1.6" fill="#ffd1da"/></g>`;
+  if(acc==='swirl')extra=`<path d="M20 22 Q30 14 40 20" stroke="#ffffffbb" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M16 30 Q28 22 40 28" stroke="#ffffff77" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  if(acc==='horn')extra=`<path d="M82 44 L100 34" stroke="#f2e3c4" stroke-width="4.5" stroke-linecap="round"/><path d="M84 43.4 L98 35" stroke="#d9c39a" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3 3"/>`;
+  const topAcc=(acc==='crown'||acc==='tiara'||acc==='star'||acc==='bow')?accSVG(acc,60,14):'';
+  const eye=(snout==='hammer')?'':`<circle cx="70" cy="42" r="6.5" fill="#fff"/><circle cx="71.8" cy="42.6" r="3.6" fill="#16436b"/><circle cx="70.7" cy="41.2" r="1.4" fill="#fff"/>`;
+  const mouth=isShark
+    ?`<path d="M84 56 Q78 61 70 58" stroke="#16436b" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M76 58.6 l1.6 2.6 l1.8 -2.2" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+    :`<path d="M84 56 Q79 61 72 58" stroke="#16436b" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+  return `<g transform="translate(50 52) scale(${scale}) translate(-50 -52)">
+    <path d="M20 44 Q6 32 4 26 Q14 36 20 38 Z" fill="${body}"/>
+    <path d="M20 60 Q6 72 4 78 Q14 68 20 66 Z" fill="${body}"/>
+    <path d="M14 52 Q16 30 46 27 Q76 25 88 48 Q90 52 88 56 Q76 79 46 77 Q16 74 14 52 Z" fill="${body}"/>
+    <path d="M26 60 Q46 74 78 62 Q60 76 40 73 Q28 70 26 60 Z" fill="${belly}"/>
+    <path d="M44 29 Q48 10 62 24 Q52 22 46 30 Z" fill="${body}"/>
+    <path d="M46 58 Q54 70 44 72 Q40 64 46 58 Z" fill="${belly}" opacity=".9"/>
+    ${pat}${head}${eye}${mouth}
+    <ellipse cx="62" cy="52" rx="3.6" ry="2.2" fill="#ff9fb2" opacity=".65"/>
+    ${extra}${topAcc}
+  </g>`;
+}
+
+/* Critter base (lions, tigers, foxes, dinos): cute front-facing head */
+function critterSVG(P){
+  const body=P.body, inner=P.belly, scale=P.scale||1, acc=P.acc||'none';
+  const F=P.f||{}; /* features: ears, mane, stripes, spots, horns, frill, crest, tuft, bigTooth */
+  let behind='';
+  if(F.mane){
+    let petals='';
+    for(let i=0;i<10;i++){const a=Math.PI*2*i/10;const px=50+Math.cos(a)*36,py=54+Math.sin(a)*36;
+      petals+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="10" fill="${F.mane}"/>`;}
+    behind+=petals+`<circle cx="50" cy="54" r="37" fill="${F.mane}"/>`;
+  }
+  if(F.frill)behind+=`<path d="M50 16 A38 38 0 0 1 88 54 L78 54 A28 28 0 0 0 50 26 A28 28 0 0 0 22 54 L12 54 A38 38 0 0 1 50 16 Z" fill="${F.frill}"/><circle cx="50" cy="54" r="36" fill="${F.frill}" opacity=".45"/>`;
+  let ears='';
+  if(F.ears==='round')ears=`<circle cx="27" cy="30" r="12" fill="${body}"/><circle cx="27" cy="30" r="6" fill="${inner}"/><circle cx="73" cy="30" r="12" fill="${body}"/><circle cx="73" cy="30" r="6" fill="${inner}"/>`;
+  if(F.ears==='pointy')ears=`<path d="M22 40 L16 12 L40 26 Z" fill="${body}"/><path d="M24 35 L20 18 L35 27 Z" fill="${inner}"/><path d="M78 40 L84 12 L60 26 Z" fill="${body}"/><path d="M76 35 L80 18 L65 27 Z" fill="${inner}"/>`;
+  if(F.ears==='big')ears=`<ellipse cx="24" cy="26" rx="13" ry="20" fill="${body}" transform="rotate(-18 24 26)"/><ellipse cx="24" cy="27" rx="7" ry="13" fill="${inner}" transform="rotate(-18 24 27)"/><ellipse cx="76" cy="26" rx="13" ry="20" fill="${body}" transform="rotate(18 76 26)"/><ellipse cx="76" cy="27" rx="7" ry="13" fill="${inner}" transform="rotate(18 76 27)"/>`;
+  let crest='';
+  if(F.crest)crest=`<path d="M34 26 L38 12 L44 24 L50 8 L56 24 L62 12 L66 26 Z" fill="${F.crest}"/>`;
+  let horns='';
+  if(F.horns)horns=`<path d="M30 30 Q22 14 28 8 Q34 16 38 26 Z" fill="#f2e3c4" stroke="#d9c39a"/><path d="M70 30 Q78 14 72 8 Q66 16 62 26 Z" fill="#f2e3c4" stroke="#d9c39a"/><path d="M50 70 L50 60" stroke="#f2e3c4" stroke-width="7" stroke-linecap="round"/>`;
+  const head=`<circle cx="50" cy="54" r="30" fill="${body}"/>`;
+  let pat='';
+  if(F.stripes)pat=`<g stroke="${F.stripes}" stroke-width="3.4" stroke-linecap="round"><path d="M40 28 Q42 34 40 38"/><path d="M50 26 Q50 33 50 37"/><path d="M60 28 Q58 34 60 38"/><path d="M24 52 L32 54"/><path d="M76 52 L68 54"/></g>`;
+  if(F.spots)pat=`<g fill="#ffffff99"><circle cx="34" cy="42" r="2.6"/><circle cx="66" cy="42" r="2.6"/><circle cx="42" cy="34" r="2.2"/><circle cx="58" cy="34" r="2.2"/></g>`;
+  const muzzle=`<ellipse cx="50" cy="66" rx="15" ry="11" fill="${inner}"/>`;
+  const eyes=`<circle cx="39" cy="49" r="6" fill="#fff"/><circle cx="40.3" cy="49.6" r="3.3" fill="#16436b"/><circle cx="39.2" cy="48.2" r="1.3" fill="#fff"/>
+    <circle cx="61" cy="49" r="6" fill="#fff"/><circle cx="62.3" cy="49.6" r="3.3" fill="#16436b"/><circle cx="61.2" cy="48.2" r="1.3" fill="#fff"/>`;
+  const nose=`<path d="M46 61 L54 61 L50 66 Z" fill="#16436b"/>`;
+  const tooth=F.bigTooth?`<path d="M46 71.5 l2 4 l2 -3.5 M54 71.5 l-2 4 l-2 -3.5" stroke="#fff" stroke-width="0" fill="none"/><path d="M44 71 l2.4 4.4 l2.4 -4 Z" fill="#fff"/><path d="M56 71 l-2.4 4.4 l-2.4 -4 Z" fill="#fff"/>`:'';
+  const mouth=`<path d="M43 70 Q50 76 57 70" stroke="#16436b" stroke-width="2.4" fill="none" stroke-linecap="round"/>${tooth}`;
+  const tuft=F.tuft?`<path d="M44 26 Q47 16 50 25 Q53 15 56 26" stroke="${body}" stroke-width="5" fill="none" stroke-linecap="round"/>`:'';
+  const blush=`<ellipse cx="30" cy="60" rx="4.4" ry="2.6" fill="#ff9fb2" opacity=".75"/><ellipse cx="70" cy="60" rx="4.4" ry="2.6" fill="#ff9fb2" opacity=".75"/>`;
+  const topAcc=accSVG(acc,50,10);
+  return `<g transform="translate(50 52) scale(${scale}) translate(-50 -52)">
+    ${behind}${ears}${crest}${horns}${head}${tuft}${pat}${muzzle}${eyes}${nose}${mouth}${blush}${topAcc}
+  </g>`;
+}
+
+/* Plant base (venus flytraps): snapping trap head on a stem */
+function plantSVG(P){
+  const body=P.body, inner=P.belly, scale=P.scale||1, acc=P.acc||'none';
+  const F=P.f||{};
+  const teethTop=`<path d="M26 46 l4 -7 l4 7 l4 -7 l4 7 l4 -7 l4 7 l4 -7 l4 7 l4 -7 l4 7" fill="none" stroke="#fff" stroke-width="0"/>
+    <path d="M26 47 l4 -8 l4 8 Z M34 47 l4 -8 l4 8 Z M42 47 l4 -8 l4 8 Z M50 47 l4 -8 l4 8 Z M58 47 l4 -8 l4 8 Z M66 47 l4 -8 l4 8 Z" fill="#fff"/>`;
+  const teethBot=`<path d="M28 50 l4 7 l4 -7 Z M36 50 l4 7 l4 -7 Z M44 50 l4 7 l4 -7 Z M52 50 l4 7 l4 -7 Z M60 50 l4 7 l4 -7 Z" fill="#fff"/>`;
+  const stripes=F.stripes?`<g stroke="${F.stripes}" stroke-width="2.6" stroke-linecap="round"><path d="M36 22 Q38 28 36 33"/><path d="M50 19 Q50 26 50 31"/><path d="M64 22 Q62 28 64 33"/></g>`:'';
+  const topAcc=accSVG(acc,50,2);
+  return `<g transform="translate(50 52) scale(${scale}) translate(-50 -52)">
+    <path d="M50 60 Q46 78 50 96" stroke="#4bb98d" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M50 78 Q34 70 30 82 Q42 86 50 80 Z" fill="#6fd0a4"/>
+    <path d="M50 86 Q66 80 70 90 Q58 95 50 88 Z" fill="#6fd0a4"/>
+    <path d="M22 48 Q22 20 50 16 Q78 20 78 48 Q64 44 50 46 Q36 44 22 48 Z" fill="${body}"/>
+    <path d="M24 50 Q24 66 50 68 Q76 66 76 50 Q62 54 50 53 Q38 54 24 50 Z" fill="${inner}"/>
+    ${teethTop}${teethBot}${stripes}
+    <circle cx="40" cy="30" r="5.6" fill="#fff"/><circle cx="41.2" cy="30.6" r="3.1" fill="#16436b"/><circle cx="40.2" cy="29.3" r="1.2" fill="#fff"/>
+    <circle cx="60" cy="30" r="5.6" fill="#fff"/><circle cx="61.2" cy="30.6" r="3.1" fill="#16436b"/><circle cx="60.2" cy="29.3" r="1.2" fill="#fff"/>
+    <ellipse cx="31" cy="36" rx="3.8" ry="2.3" fill="#ff9fb2" opacity=".8"/>
+    <ellipse cx="69" cy="36" rx="3.8" ry="2.3" fill="#ff9fb2" opacity=".8"/>
+    ${topAcc}
+  </g>`;
+}
+
+/* Master piece renderer */
+function pieceSVG(theme, type, opts={}){
+  const T=THEMES[theme];
+  let P=T.pieces[type]||T.pieces.p;
+  if(opts.generic){P={...T.pieces.k, acc:'none', scale:1};}
+  let inner;
+  if(T.base==='fish')inner=fishSVG(P, theme==='sharks');
+  else if(T.base==='plant')inner=plantSVG(P);
+  else inner=critterSVG(P);
+  const flip=(T.base==='fish'&&opts.flip)?' style="transform:scaleX(-1)"':'';
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"${flip}>${inner}</svg>`;
+}
+
+const THEMES = {
+  dolphins:{emoji:'🐬', label:'Dolphins', base:'fish', pieces:{
+    p:{name:'Baby Dolphin',  body:'#cfeaff', belly:'#f4fbff', scale:.78, acc:'pacifier'},
+    r:{name:'Orca',          body:'#3c5a75', belly:'#ffffff', pattern:'patch'},
+    n:{name:'Spinner',       body:'#a8dcf5', belly:'#f0faff', acc:'swirl'},
+    b:{name:'River Dolphin', body:'#ffc4d0', belly:'#ffeef2', snout:'long', pattern:'freckles'},
+    q:{name:'Pilot Whale',   body:'#6c7f9d', belly:'#e9eef7', snout:'melon', scale:1.12, acc:'tiara'},
+    k:{name:'Bottlenose',    body:'#9fd2f0', belly:'#f0faff', scale:1.1, acc:'crown'},
+    a:{name:'Super Orca',    body:'#2f4a63', belly:'#ffffff', pattern:'patch', scale:1.16, acc:'tiara'},
+    c:{name:'Beluga',        body:'#eef6fb', belly:'#ffffff', snout:'melon'},
+    h:{name:'Narwhal',       body:'#bcd3e8', belly:'#f0f7fd', acc:'horn'},
+    d:{name:'Dusky Dolphin', body:'#8fb8d8', belly:'#eaf4fc', pattern:'stripes'},
+    m:{name:'Spotted',       body:'#b9d8ea', belly:'#f0f8fd', pattern:'spots', acc:'bow'},
+  }},
+  sharks:{emoji:'🦈', label:'Sharks', base:'fish', pieces:{
+    p:{name:'Baby Shark',   body:'#9fc6de', belly:'#eaf6fd', scale:.78, acc:'pacifier'},
+    r:{name:'Hammerhead',   body:'#7fa8c4', belly:'#e3f1fa', snout:'hammer'},
+    n:{name:'Mako Shark',   body:'#6f9fd0', belly:'#e3f1fa', acc:'swirl'},
+    b:{name:'Thresher',     body:'#8fb4d8', belly:'#eaf4fc', snout:'pointy', acc:'star'},
+    q:{name:'Whale Shark',  body:'#6d8fb8', belly:'#e6f2fb', pattern:'spots', scale:1.12, acc:'tiara'},
+    k:{name:'Great White',  body:'#8aa9c0', belly:'#f2f8fd', scale:1.1, acc:'crown'},
+    a:{name:'Megalodon',    body:'#5f7f9f', belly:'#dfeefa', scale:1.16, acc:'tiara'},
+    c:{name:'Tiger Shark',  body:'#7ba3bf', belly:'#e8f3fa', pattern:'stripes'},
+    h:{name:'Sawshark',     body:'#8fb0cc', belly:'#eaf4fc', snout:'saw'},
+    d:{name:'Goblin Shark', body:'#b3a0c9', belly:'#efe8f7', snout:'pointy'},
+    m:{name:'Zebra Shark',  body:'#a3b8a0', belly:'#ecf4ea', pattern:'stripes', acc:'bow'},
+  }},
+  dinos:{emoji:'🦖', label:'Dinosaurs', base:'critter', pieces:{
+    p:{name:'Hatchling',     body:'#b8e2a8', belly:'#eefae6', scale:.78, acc:'star', f:{crest:'#8fce78'}},
+    r:{name:'Triceratops',   body:'#a9c48f', belly:'#e9f4dd', f:{horns:true, frill:'#8fb573'}},
+    n:{name:'Velociraptor',  body:'#8fce9e', belly:'#e4f7e9', f:{crest:'#5fae72', bigTooth:true}},
+    b:{name:'Brachiosaurus', body:'#9fd2c0', belly:'#e8f7f1', f:{spots:true}},
+    q:{name:'Spinosaurus',   body:'#7fb98f', belly:'#e2f2e5', scale:1.12, acc:'tiara', f:{crest:'#4f9663'}},
+    k:{name:'T-Rex',         body:'#79b573', belly:'#e0f2dc', scale:1.1, acc:'crown', f:{bigTooth:true}},
+    a:{name:'Giganotosaurus',body:'#5f9e63', belly:'#d9eed8', scale:1.16, acc:'tiara', f:{bigTooth:true, crest:'#3f7a45'}},
+    c:{name:'Ankylosaurus',  body:'#a8b88f', belly:'#eef2df', f:{spots:true, horns:true}},
+    h:{name:'Pteranodon',    body:'#a8cbe0', belly:'#eaf4fb', f:{crest:'#7fa9c4'}},
+    d:{name:'Dilophosaurus', body:'#b6d089', belly:'#f0f7dd', f:{crest:'#93b45f', stripes:'#7d9c4d'}},
+    m:{name:'Stegosaurus',   body:'#c9b98f', belly:'#f6efdc', acc:'bow', f:{crest:'#a8925f'}},
+  }},
+  lions:{emoji:'🦁', label:'Lions', base:'critter', pieces:{
+    p:{name:'Lion Cub',    body:'#f5cd8f', belly:'#fdf0da', scale:.78, acc:'star', f:{ears:'round', tuft:true}},
+    r:{name:'Guard Lion',  body:'#e0ab63', belly:'#f9e8ca', f:{ears:'round', mane:'#b97f3f'}},
+    n:{name:'Pouncer',     body:'#eec07d', belly:'#fbeed6', f:{ears:'round', tuft:true}},
+    b:{name:'Wise Lion',   body:'#e6b26b', belly:'#f9ead0', f:{ears:'round', mane:'#c98f4c', spots:true}},
+    q:{name:'Queen Lioness',body:'#f0c684', belly:'#fcf0db', scale:1.12, acc:'tiara', f:{ears:'round'}},
+    k:{name:'King Lion',   body:'#e2a95e', belly:'#f9e7c8', scale:1.1, acc:'crown', f:{ears:'round', mane:'#b5772f'}},
+    a:{name:'Barbary Lion',body:'#cf9448', belly:'#f5e0bc', scale:1.16, acc:'tiara', f:{ears:'round', mane:'#9c6425'}},
+    c:{name:'Mountain Lion',body:'#d8b48a', belly:'#f6ead7', f:{ears:'round'}},
+    h:{name:'Snow Lion',   body:'#eee6d8', belly:'#fbf8f2', f:{ears:'round', mane:'#d8ccb8'}},
+    d:{name:'Shadow Lion', body:'#a98a68', belly:'#e8dccb', f:{ears:'round', mane:'#84644a'}},
+    m:{name:'Desert Lion', body:'#e8c393', belly:'#f9eeda', acc:'bow', f:{ears:'round', spots:true}},
+  }},
+  tigers:{emoji:'🐯', label:'Tigers', base:'critter', pieces:{
+    p:{name:'Tiger Cub',     body:'#f8b96e', belly:'#feeacb', scale:.78, acc:'star', f:{ears:'round', stripes:'#c26a2a'}},
+    r:{name:'Bruiser',       body:'#ef9e4a', belly:'#fce3c0', f:{ears:'round', stripes:'#a8531e'}},
+    n:{name:'Prowler',       body:'#f4ab58', belly:'#fde7c6', f:{ears:'round', stripes:'#b55b22'}},
+    b:{name:'Whiskers',      body:'#f2a552', belly:'#fce5c3', f:{ears:'round', stripes:'#ad5620', spots:true}},
+    q:{name:'Queen Tiger',   body:'#f6b163', belly:'#fdeacb', scale:1.12, acc:'tiara', f:{ears:'round', stripes:'#b85e24'}},
+    k:{name:'King Tiger',    body:'#ec973f', belly:'#fbe0ba', scale:1.1, acc:'crown', f:{ears:'round', stripes:'#a04e1a', bigTooth:true}},
+    a:{name:'Siberian Tiger',body:'#f2ede4', belly:'#fdfbf7', scale:1.16, acc:'tiara', f:{ears:'round', stripes:'#8a8378'}},
+    c:{name:'Bengal Tiger',  body:'#e88f38', belly:'#fadcb2', f:{ears:'round', stripes:'#994a16'}},
+    h:{name:'Snow Tiger',    body:'#e3ecf2', belly:'#f8fbfd', f:{ears:'round', stripes:'#93a8b5'}},
+    d:{name:'Shadow Tiger',  body:'#b98a56', belly:'#ecd9c2', f:{ears:'round', stripes:'#825a32'}},
+    m:{name:'Little Stripe', body:'#f8c07a', belly:'#feecd0', acc:'bow', f:{ears:'round', stripes:'#c26a2a'}},
+  }},
+  foxes:{emoji:'🦊', label:'Foxes', base:'critter', pieces:{
+    p:{name:'Fox Kit',      body:'#f8b170', belly:'#fdebd6', scale:.78, acc:'star', f:{ears:'pointy'}},
+    r:{name:'Arctic Fox',   body:'#eef2f6', belly:'#fbfcfe', f:{ears:'pointy'}},
+    n:{name:'Fennec',       body:'#f2cf9a', belly:'#fcf1dd', f:{ears:'big'}},
+    b:{name:'Gray Fox',     body:'#b8bfc9', belly:'#eef0f4', f:{ears:'pointy', spots:true}},
+    q:{name:'Silver Fox',   body:'#9aa3b5', belly:'#e8ebf1', scale:1.12, acc:'tiara', f:{ears:'pointy'}},
+    k:{name:'Red Fox',      body:'#ef9048', belly:'#fbdfc3', scale:1.1, acc:'crown', f:{ears:'pointy'}},
+    a:{name:'Nine-Tail Fox',body:'#f3f0f8', belly:'#fdfcff', scale:1.16, acc:'tiara', f:{ears:'pointy', spots:true}},
+    c:{name:'Swift Fox',    body:'#e8b579', belly:'#f9ecd6', f:{ears:'pointy'}},
+    h:{name:'Bat-Eared Fox',body:'#cfae83', belly:'#f2e6d3', f:{ears:'big'}},
+    d:{name:'Shadow Fox',   body:'#8c7a90', belly:'#e2dae4', f:{ears:'pointy'}},
+    m:{name:'Desert Fox',   body:'#f2c98f', belly:'#fcf0da', acc:'bow', f:{ears:'big'}},
+  }},
+  flytraps:{emoji:'🌱', label:'Venus Flytraps', base:'plant', pieces:{
+    p:{name:'Sprout',       body:'#a8dd8f', belly:'#ffb9c8', scale:.78, acc:'star'},
+    r:{name:'Big Chomper',  body:'#6fbf5f', belly:'#ff9fb2'},
+    n:{name:'Snappy',       body:'#8fce78', belly:'#ffacbd', f:{stripes:'#5fa84f'}},
+    b:{name:'Twisty Vine',  body:'#7fc9a0', belly:'#ffb0c0'},
+    q:{name:'Queen Trap',   body:'#5fae5f', belly:'#ff8fa3', scale:1.12, acc:'tiara'},
+    k:{name:'King Trap',    body:'#4f9e53', belly:'#ff7f96', scale:1.1, acc:'crown'},
+    a:{name:'Mega Chomper', body:'#3f8a48', belly:'#f76e88', scale:1.16, acc:'tiara'},
+    c:{name:'Thorn Trap',   body:'#7fae4f', belly:'#ff9fb2', f:{stripes:'#5c8a33'}},
+    h:{name:'Vine Whip',    body:'#8fc9b5', belly:'#ffb0c0'},
+    d:{name:'Night Snapper',body:'#5f8a72', belly:'#e88aa0'},
+    m:{name:'Sun Trap',     body:'#c2d86f', belly:'#ffb9c8', acc:'bow', f:{stripes:'#9ab24a'}},
+  }},
 };
+
+/* ================= MODES, ALPHA PREDATORS, TIMES ================= */
+const MODES = {
+  normal:{emoji:'🐚', name:'Normal Chess',  desc:'Classic chess with full rules — castling and all!'},
+  blind: {emoji:'🌫️', name:'Mystery Mode',  desc:'Everyone looks the same. Remember who is who!'},
+  wild:  {emoji:'🌀', name:'Wild Waters (Chess variant)', desc:'Special super-pieces with wild new moves!'},
+  custom:{emoji:'🛠️', name:'Custom Chess',  desc:'Build your own board, then battle!'}
+};
+const PREDATORS = [
+  {name:'Cubby',   em:'🐻', label:'Super easy', elo:150, ps:'A fuzzy beginner who naps mid-game.'},
+  {name:'Snappy',  em:'🐊', label:'Easy',       elo:250, ps:'Big grin, easily distracted.'},
+  {name:'Foxtrot', em:'🦊', label:'Medium',     elo:350, ps:'Sneaky and quick on their paws.'},
+  {name:'Fang',    em:'🐺', label:'Tricky',     elo:450, ps:'Howls after every capture.'},
+  {name:'Rex',     em:'🦖', label:'Hard',       elo:650, ps:'Thinks three bites ahead.'},
+];
 const TIMES = [
   {v:0,  em:'♾️', name:'No timer'},
   {v:3,  em:'🐇', name:'3 min'},
   {v:5,  em:'🐢', name:'5 min'},
   {v:10, em:'🐌', name:'10 min'}
 ];
-const BOTS = [
-  {name:'Baby Reef',   em:'🐠', label:'Super easy', elo:150},
-  {name:'Bubble Bot',  em:'🫧', label:'Easy',       elo:250},
-  {name:'Tiny Fin',    em:'🐟', label:'Medium',     elo:350},
-  {name:'Reef Rookie', em:'🐡', label:'Tricky',     elo:450},
-  {name:'Deep Blue',   em:'🐋', label:'Hard',       elo:650},
-];
+const VAL={p:1,n:3,b:3,m:3,d:4,r:5,h:6,c:7,q:9,a:11,k:100};
 
-/* ---------- State ---------- */
+/* ================= STATE ================= */
 let board, turn='w', selected=null, moves=[], reveal=false, flipped=false,
     pendingPromotion=null, captured={w:[],b:[]}, gameOver=false, lastMove=null,
-    mode='reef', playerSide='w', botOn=false, botIndex=0,
+    mode='normal', playerSide='w', botOn=false, botIndex=0,
+    teams={w:'dolphins', b:'sharks'},
     sfxOn=true, musicOn=false, audioCtx=null, musicTimer=null, animating=false,
-    names={w:'',b:''}, timerSetting=0, clocks={w:0,b:0}, clockInterval=null, lastTick=0;
+    names={w:'',b:''}, timerSetting=0, clocks={w:0,b:0}, clockInterval=null, lastTick=0,
+    epTarget=null, setupMode=false, setupTool=null,
+    history=[], pendingEntry=null, reviewIdx=-1;
 
 const boardEl=document.getElementById('board'), statusEl=document.getElementById('status'),
       statusFace=document.getElementById('statusFace'),
       capW=document.getElementById('capW'), capB=document.getElementById('capB'),
       fxLayer=document.getElementById('fxLayer');
 
-/* ---------- Setup / engine ---------- */
-function initial(){
-  const normal =['r','n','b','q','k','b','n','r'];
+/* ================= HELPERS ================= */
+function inB(r,c){return r>=0&&r<8&&c>=0&&c<8}
+function clone(b){return b.map(row=>row.map(p=>p?{...p}:null))}
+function teamOf(side){return THEMES[teams[side]]}
+function pieceName(side,type){return teamOf(side).pieces[type].name}
+function sideEmoji(side){return teamOf(side).emoji}
+function displayName(side){return names[side]||teamOf(side).label}
+function sqName(r,c){return 'abcdefgh'[c]+(8-r)}
+function art(side,type,opts={}){return pieceSVG(teams[side],type,{...opts,flip:side==='b'})}
+function isBlind(){return mode==='blind'&&!reveal}
+
+/* ================= SETUP / START POSITIONS ================= */
+function standardBoard(){
+  const normal=['r','n','b','q','k','b','n','r'];
   const special=['r','d','h','a','k','h','m','r'];
-  const back = (mode==='wild') ? special : normal;
-  board=Array.from({length:8},()=>Array(8).fill(null));
+  const back=(mode==='wild')?special:normal;
+  const b=Array.from({length:8},()=>Array(8).fill(null));
   for(let c=0;c<8;c++){
     const front=(mode==='wild')?(c<5?'p':'c'):'p';
-    board[0][c]={c:'b',t:back[c]}; board[1][c]={c:'b',t:front};
-    board[6][c]={c:'w',t:front};  board[7][c]={c:'w',t:back[c]};
+    b[0][c]={c:'b',t:back[c]}; b[1][c]={c:'b',t:front};
+    b[6][c]={c:'w',t:front};  b[7][c]={c:'w',t:back[c]};
   }
+  return b;
+}
+function initial(){
   turn='w'; selected=null; moves=[]; captured={w:[],b:[]};
   pendingPromotion=null; gameOver=false; lastMove=null; animating=false;
-  clocks={w:timerSetting*60,b:timerSetting*60};
-  document.getElementById('clocks').classList.toggle('show',timerSetting>0);
-  renderClocks(); startClock();
+  epTarget=null; history=[]; pendingEntry=null; reviewIdx=-1;
+  document.getElementById('reviewBar').classList.remove('show');
+  document.getElementById('reviewBtn').style.display='none';
   document.getElementById('endModal').classList.remove('open');
-  flipped = (playerSide==='b');
+  flipped=(playerSide==='b');
+  if(mode==='custom'){
+    board=Array.from({length:8},()=>Array(8).fill(null));
+    setupMode=true; setupTool=null;
+    document.getElementById('clocks').classList.remove('show');
+    buildPalettes();
+    document.getElementById('setupBar').classList.add('show');
+    stopClock();
+  }else{
+    board=standardBoard();
+    setupMode=false;
+    document.getElementById('setupBar').classList.remove('show');
+    clocks={w:timerSetting*60,b:timerSetting*60};
+    document.getElementById('clocks').classList.toggle('show',timerSetting>0);
+    renderClocks(); startClock();
+    history=[{snap:clone(board)}];
+  }
   render(); updateSideUI();
   maybeBot();
 }
-function inB(r,c){return r>=0&&r<8&&c>=0&&c<8}
-function clone(b){return b.map(row=>row.map(p=>p?{...p}:null))}
-function addLeapers(r,c,steps,res){const p=board[r][c];for(const[dr,dc]of steps){const nr=r+dr,nc=c+dc;if(inB(nr,nc)&&board[nr][nc]?.c!==p.c)res.push([nr,nc]);}}
-function pathMoves(r,c,dirs){const res=[],p=board[r][c];for(const[dr,dc]of dirs){let nr=r+dr,nc=c+dc;while(inB(nr,nc)){if(!board[nr][nc])res.push([nr,nc]);else{if(board[nr][nc].c!==p.c)res.push([nr,nc]);break;}nr+=dr;nc+=dc;}}return res}
-function nightriderMoves(r,c){const res=[],p=board[r][c];const K=[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];for(const[dr,dc]of K){let nr=r+dr,nc=c+dc;while(inB(nr,nc)){if(!board[nr][nc])res.push([nr,nc]);else{if(board[nr][nc].c!==p.c)res.push([nr,nc]);break;}nr+=dr;nc+=dc;}}return res}
-function rawMoves(r,c){
-  const p=board[r][c]; if(!p)return[]; const enemy=p.c==='w'?'b':'w'; let res=[];
-  const rook=[[1,0],[-1,0],[0,1],[0,-1]], bishop=[[1,1],[1,-1],[-1,1],[-1,-1]], queen=[...rook,...bishop];
-  const knight=[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]], camel=[[1,3],[3,1],[-1,3],[-3,1],[1,-3],[3,-1],[-1,-3],[-3,-1]];
-  if(p.t==='p'){const dir=p.c==='w'?-1:1, start=p.c==='w'?6:1;
-    if(inB(r+dir,c)&&!board[r+dir][c]){res.push([r+dir,c]); if(r===start&&!board[r+2*dir][c])res.push([r+2*dir,c]);}
-    for(const dc of[-1,1]) if(inB(r+dir,c+dc)&&board[r+dir][c+dc]?.c===enemy)res.push([r+dir,c+dc]);}
-  if(p.t==='n')addLeapers(r,c,knight,res);
-  if(p.t==='m')addLeapers(r,c,camel,res);
-  if(p.t==='b')res=pathMoves(r,c,bishop);
-  if(p.t==='r')res=pathMoves(r,c,rook);
-  if(p.t==='q')res=pathMoves(r,c,queen);
-  if(p.t==='k'){addLeapers(r,c,queen.map(d=>d),res);res=res.filter(([nr,nc])=>Math.abs(nr-r)<=1&&Math.abs(nc-c)<=1);}
-  if(p.t==='a'){res=pathMoves(r,c,queen);addLeapers(r,c,knight,res);}
-  if(p.t==='c'){res=pathMoves(r,c,rook);addLeapers(r,c,knight,res);}
-  if(p.t==='h'){res=pathMoves(r,c,bishop);addLeapers(r,c,knight,res);}
-  if(p.t==='d')res=nightriderMoves(r,c);
+
+/* ---------- Custom setup ---------- */
+function buildPalettes(){
+  const pal=document.getElementById('palettes');
+  pal.innerHTML='';
+  for(const side of ['w','b']){
+    const label=document.createElement('div');
+    label.className='palLabel';
+    label.textContent=`${sideEmoji(side)} ${displayName(side)} pieces`;
+    pal.appendChild(label);
+    const row=document.createElement('div');
+    row.className='palRow';
+    for(const t of ['k','q','r','b','n','p']){
+      const b=document.createElement('button');
+      b.className='palBtn'+(setupTool&&setupTool.c===side&&setupTool.t===t?' on':'');
+      b.innerHTML=art(side,t);
+      b.title=`${pieceName(side,t)} (${ROLE[t]})`;
+      b.setAttribute('aria-label',`Place ${pieceName(side,t)}, ${ROLE[t]}`);
+      b.onclick=()=>{setupTool={c:side,t};buildPalettes();};
+      row.appendChild(b);
+    }
+    pal.appendChild(row);
+  }
+  const er=document.createElement('button');
+  er.className='palBtn eraser'+(setupTool==='erase'?' on':'');
+  er.textContent='🧽';
+  er.title='Eraser';
+  er.setAttribute('aria-label','Eraser — remove pieces');
+  er.onclick=()=>{setupTool='erase';buildPalettes();};
+  pal.appendChild(er);
+}
+function setupClick(r,c){
+  if(setupTool==='erase'){board[r][c]=null;}
+  else if(setupTool){
+    if(setupTool.t==='k'){ /* only one king per side: move it */
+      for(let rr=0;rr<8;rr++)for(let cc=0;cc<8;cc++)
+        if(board[rr][cc]?.c===setupTool.c&&board[rr][cc].t==='k')board[rr][cc]=null;
+    }
+    if(setupTool.t==='p'&&(r===0||r===7)){
+      statusEl.textContent='Babies can\'t start on the last row!';
+      return;
+    }
+    board[r][c]={c:setupTool.c,t:setupTool.t,moved:true};
+  }else if(board[r][c]){board[r][c]=null;}
+  render();
+}
+function startCustomGame(){
+  const kW=findKing('w'), kB=findKing('b');
+  if(!kW||!kB){statusEl.textContent='Both teams need a king! 👑';playSfx('check');return;}
+  if(Math.abs(kW[0]-kB[0])<=1&&Math.abs(kW[1]-kB[1])<=1){statusEl.textContent='Kings can\'t start next to each other!';playSfx('check');return;}
+  if(attacked(board,kW[0],kW[1],'b')||attacked(board,kB[0],kB[1],'w')){
+    statusEl.textContent='Kings can\'t start in danger! Move them to safety.';playSfx('check');return;
+  }
+  setupMode=false; setupTool=null;
+  document.getElementById('setupBar').classList.remove('show');
+  clocks={w:timerSetting*60,b:timerSetting*60};
+  document.getElementById('clocks').classList.toggle('show',timerSetting>0);
+  renderClocks(); startClock();
+  history=[{snap:clone(board)}];
+  render();
+  playSfx('promote');
+  maybeBot();
+}
+
+/* ================= RULES ENGINE ================= */
+/* Pseudo-legal move generation. attacksOnly: squares this piece attacks (for check detection). */
+function genPseudo(bd,r,c,attacksOnly=false,ep=null){
+  const p=bd[r][c]; if(!p)return[];
+  const enemy=p.c==='w'?'b':'w'; let res=[];
+  const rookD=[[1,0],[-1,0],[0,1],[0,-1]], bishD=[[1,1],[1,-1],[-1,1],[-1,-1]], queenD=[...rookD,...bishD];
+  const knightD=[[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];
+  const camelD=[[1,3],[3,1],[-1,3],[-3,1],[1,-3],[3,-1],[-1,-3],[-3,-1]];
+  const slide=(dirs)=>{for(const[dr,dc]of dirs){let nr=r+dr,nc=c+dc;while(inB(nr,nc)){if(!bd[nr][nc])res.push({nr,nc});else{if(bd[nr][nc].c!==p.c)res.push({nr,nc});break;}nr+=dr;nc+=dc;}}};
+  const leap=(steps)=>{for(const[dr,dc]of steps){const nr=r+dr,nc=c+dc;if(inB(nr,nc)&&bd[nr][nc]?.c!==p.c)res.push({nr,nc});}};
+  const ride=(steps)=>{for(const[dr,dc]of steps){let nr=r+dr,nc=c+dc;while(inB(nr,nc)){if(!bd[nr][nc])res.push({nr,nc});else{if(bd[nr][nc].c!==p.c)res.push({nr,nc});break;}nr+=dr;nc+=dc;}}};
+  switch(p.t){
+    case 'p':{
+      const dir=p.c==='w'?-1:1, start=p.c==='w'?6:1;
+      if(!attacksOnly){
+        if(inB(r+dir,c)&&!bd[r+dir][c]){
+          res.push({nr:r+dir,nc:c});
+          if(r===start&&!bd[r+2*dir][c])res.push({nr:r+2*dir,nc:c,dbl:true});
+        }
+      }
+      for(const dc of[-1,1]){
+        const nr=r+dir,nc=c+dc;
+        if(!inB(nr,nc))continue;
+        if(attacksOnly){res.push({nr,nc});continue;}
+        if(bd[nr][nc]?.c===enemy)res.push({nr,nc});
+        else if(ep&&ep[0]===nr&&ep[1]===nc&&bd[r][nc]?.c===enemy&&bd[r][nc].t==='p')res.push({nr,nc,ep:true});
+      }
+      break;
+    }
+    case 'n':leap(knightD);break;
+    case 'm':leap(camelD);break;
+    case 'b':slide(bishD);break;
+    case 'r':slide(rookD);break;
+    case 'q':slide(queenD);break;
+    case 'a':slide(queenD);leap(knightD);break;
+    case 'c':slide(rookD);leap(knightD);break;
+    case 'h':slide(bishD);leap(knightD);break;
+    case 'd':ride(knightD);break;
+    case 'k':{
+      leap(queenD);
+      if(!attacksOnly&&!p.moved&&!attacked(bd,r,c,enemy)){
+        /* kingside */
+        const rk=bd[r][7];
+        if(rk&&rk.t==='r'&&rk.c===p.c&&!rk.moved&&!bd[r][5]&&!bd[r][6]
+           &&!attacked(bd,r,5,enemy)&&!attacked(bd,r,6,enemy)&&c===4){
+          res.push({nr:r,nc:6,castle:'k'});
+        }
+        /* queenside */
+        const rq=bd[r][0];
+        if(rq&&rq.t==='r'&&rq.c===p.c&&!rq.moved&&!bd[r][1]&&!bd[r][2]&&!bd[r][3]
+           &&!attacked(bd,r,2,enemy)&&!attacked(bd,r,3,enemy)&&c===4){
+          res.push({nr:r,nc:2,castle:'q'});
+        }
+      }
+      break;
+    }
+  }
   return res;
 }
-function findKing(color,b=board){for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(b[r][c]?.c===color&&b[r][c].t==='k')return[r,c];return null}
-function attacked(r,c,byColor){for(let rr=0;rr<8;rr++)for(let cc=0;cc<8;cc++){const p=board[rr][cc];if(p?.c===byColor){if(rawMoves(rr,cc).some(([a,b])=>a===r&&b===c))return true;}}return false}
+function attacked(bd,r,c,byColor){
+  for(let rr=0;rr<8;rr++)for(let cc=0;cc<8;cc++){
+    const p=bd[rr][cc];
+    if(p?.c===byColor){
+      if(genPseudo(bd,rr,cc,true).some(m=>m.nr===r&&m.nc===c))return true;
+    }
+  }
+  return false;
+}
+function findKing(color,bd=board){for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(bd[r][c]?.c===color&&bd[r][c].t==='k')return[r,c];return null}
+/* Apply a move to a board. Returns the captured piece (or null). */
+function applyMove(bd,r,c,mv){
+  const p=bd[r][c];
+  let cap=bd[mv.nr][mv.nc];
+  if(mv.ep){cap=bd[r][mv.nc];bd[r][mv.nc]=null;}
+  bd[mv.nr][mv.nc]={...p,moved:true};
+  bd[r][c]=null;
+  if(mv.castle==='k'){bd[mv.nr][5]={...bd[mv.nr][7],moved:true};bd[mv.nr][7]=null;}
+  if(mv.castle==='q'){bd[mv.nr][3]={...bd[mv.nr][0],moved:true};bd[mv.nr][0]=null;}
+  return cap;
+}
 function legalMoves(r,c){
   const p=board[r][c]; if(!p||p.c!==turn)return[];
   const out=[];
-  for(const[nr,nc]of rawMoves(r,c)){
-    const old=clone(board);
-    board[nr][nc]=board[r][c]; board[r][c]=null;
-    const k=findKing(p.c);
-    const ok=k&&!attacked(k[0],k[1],p.c==='w'?'b':'w');
-    board=old;
-    if(ok)out.push([nr,nc]);
+  for(const mv of genPseudo(board,r,c,false,epTarget)){
+    const test=clone(board);
+    applyMove(test,r,c,mv);
+    const k=findKing(p.c,test);
+    if(k&&!attacked(test,k[0],k[1],p.c==='w'?'b':'w'))out.push(mv);
   }
   return out;
 }
 function hasAnyLegal(color){
   const oldTurn=turn; turn=color;
   for(let r=0;r<8;r++)for(let c=0;c<8;c++)
-    if(board[r][c]?.c===color && legalMoves(r,c).length){turn=oldTurn;return true;}
+    if(board[r][c]?.c===color&&legalMoves(r,c).length){turn=oldTurn;return true;}
   turn=oldTurn; return false;
 }
 
-/* ---------- Clocks ---------- */
+/* ================= CLOCKS ================= */
 function fmtTime(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function renderClocks(){
   if(!timerSetting)return;
   const cw=document.getElementById('clockW'), cb=document.getElementById('clockB');
-  cw.textContent='🐬 '+(names.w?names.w+' ':'')+fmtTime(clocks.w);
-  cb.textContent='🦈 '+(names.b?names.b+' ':'')+fmtTime(clocks.b);
-  cw.classList.toggle('active',turn==='w'&&!gameOver);
-  cb.classList.toggle('active',turn==='b'&&!gameOver);
+  cw.textContent=sideEmoji('w')+' '+(names.w?names.w+' ':'')+fmtTime(clocks.w);
+  cb.textContent=sideEmoji('b')+' '+(names.b?names.b+' ':'')+fmtTime(clocks.b);
+  cw.classList.toggle('active',turn==='w'&&!gameOver&&!setupMode);
+  cb.classList.toggle('active',turn==='b'&&!gameOver&&!setupMode);
   cw.classList.toggle('low',clocks.w<=20&&clocks.w>0);
   cb.classList.toggle('low',clocks.b<=20&&clocks.b>0);
 }
@@ -725,7 +1059,7 @@ function startClock(){
   lastTick=performance.now();
   clockInterval=setInterval(()=>{
     const now=performance.now();
-    if(gameOver||pendingPromotion||animating){lastTick=now;return;}
+    if(gameOver||pendingPromotion||animating||setupMode||reviewIdx>=0){lastTick=now;return;}
     clocks[turn]-=(now-lastTick)/1000;
     lastTick=now;
     if(clocks[turn]<=0){
@@ -737,74 +1071,101 @@ function startClock(){
   },200);
 }
 function stopClock(){if(clockInterval)clearInterval(clockInterval);clockInterval=null;}
-function displayName(side){return names[side]||(side==='w'?'Dolphins':'Sharks')}
 
-/* ---------- Interaction ---------- */
+/* ================= INTERACTION ================= */
 function clickSquare(r,c){
+  if(reviewIdx>=0)return;
+  if(setupMode){setupClick(r,c);return;}
   if(pendingPromotion||gameOver||animating)return;
   const p=board[r][c];
-  if(selected&&moves.some(([a,b])=>a===r&&b===c)){doMove(selected[0],selected[1],r,c);return;}
+  const mv=selected&&moves.find(m=>m.nr===r&&m.nc===c);
+  if(mv){doMove(selected[0],selected[1],mv);return;}
   if(p&&p.c===turn&&!(botOn&&turn!==playerSide)){selected=[r,c];moves=legalMoves(r,c);}
   else{selected=null;moves=[];}
   render();
+}
+function displayIndex(r,c){
+  const rr=flipped?7-r:r, cc=flipped?7-c:c;
+  return rr*8+cc;
 }
 function squareCenter(r,c){
   const cell=boardEl.children[displayIndex(r,c)];
   const b=boardEl.getBoundingClientRect(), s=cell.getBoundingClientRect();
   return {x:s.left-b.left, y:s.top-b.top, w:s.width, h:s.height};
 }
-function displayIndex(r,c){
-  const rr=flipped?7-r:r, cc=flipped?7-c:c;
-  return rr*8+cc;
-}
-function doMove(r,c,nr,nc){
-  const p=board[r][c], target=board[nr][nc];
-  const from=squareCenter(r,c), to=squareCenter(nr,nc);
+function doMove(r,c,mv){
+  const p=board[r][c];
+  const capSq=mv.ep?[r,mv.nc]:[mv.nr,mv.nc];
+  const target=mv.ep?board[r][mv.nc]:board[mv.nr][mv.nc];
+  const from=squareCenter(r,c), to=squareCenter(mv.nr,mv.nc), capAt=squareCenter(capSq[0],capSq[1]);
+  applyMove(board,r,c,mv);
+  epTarget=mv.dbl?[(r+mv.nr)/2,c]:null;
   if(target)captured[p.c].push({t:target.t,c:target.c});
-  board[nr][nc]=p; board[r][c]=null;
-  selected=null; moves=[]; lastMove=[[r,c],[nr,nc]];
+  selected=null; moves=[]; lastMove=[[r,c],[mv.nr,mv.nc]];
+  pendingEntry={from:[r,c],to:[mv.nr,mv.nc],mover:{t:p.t,c:p.c},captured:target?{t:target.t,c:target.c}:null,castle:mv.castle||null,ep:!!mv.ep,promo:null};
   animating=true;
   render();
-  const destCell=boardEl.children[displayIndex(nr,nc)];
+  const destCell=boardEl.children[displayIndex(mv.nr,mv.nc)];
   const destPiece=destCell.querySelector('.piece');
   if(destPiece)destPiece.style.visibility='hidden';
-  animateGhost(p, target, from, to, ()=>{
+  let rookGhost=null;
+  if(mv.castle){
+    const rFrom=squareCenter(mv.nr,mv.castle==='k'?7:0);
+    /* rook already rendered at new square; animate a ghost from the corner */
+    const rTo=squareCenter(mv.nr,mv.castle==='k'?5:3);
+    const rCell=boardEl.children[displayIndex(mv.nr,mv.castle==='k'?5:3)];
+    const rPiece=rCell.querySelector('.piece');
+    if(rPiece)rPiece.style.visibility='hidden';
+    rookGhost={rFrom,rTo,rPiece,side:p.c};
+  }
+  animateGhost(p, target, from, to, capAt, rookGhost, ()=>{
     if(destPiece)destPiece.style.visibility='';
+    if(rookGhost&&rookGhost.rPiece)rookGhost.rPiece.style.visibility='';
     animating=false;
-    if(target){playSfx('capture');}else{playSfx('move');}
-    if(p.t==='p'&&(nr===0||nr===7)){
+    if(target)playSfx('capture');else playSfx('move');
+    if(p.t==='p'&&(mv.nr===0||mv.nr===7)){
       if(botOn&&p.c!==playerSide){
-        board[nr][nc].t=(mode==='wild')?'a':'q';
+        board[mv.nr][mv.nc].t=(mode==='wild')?'a':'q';
+        pendingEntry.promo=(mode==='wild')?'a':'q';
         playSfx('promote');
         finishTurn();
         return;
       }
-      pendingPromotion=[nr,nc];
+      pendingPromotion=[mv.nr,mv.nc];
       openPromo(p.c);
       return;
     }
     finishTurn();
   });
 }
-function animateGhost(p, target, from, to, done){
-  const blind = (mode==='blind') && !reveal;
+function animateGhost(p, target, from, to, capAt, rookGhost, done){
+  const blind=isBlind();
   const ghost=document.createElement('div');
   ghost.className='fxGhost';
   ghost.style.width=from.w*0.82+'px'; ghost.style.height=from.h*0.82+'px';
   ghost.style.left=(from.x+from.w*0.09)+'px'; ghost.style.top=(from.y+from.h*0.09)+'px';
-  ghost.innerHTML=creatureSVG(p.t,p.c,{generic:blind});
-  if(p.c==='b')ghost.firstElementChild.style.transform='scaleX(-1)';
+  ghost.innerHTML=art(p.c,p.t,{generic:blind});
   fxLayer.appendChild(ghost);
-
+  if(rookGhost){
+    const rg=document.createElement('div');
+    rg.className='fxGhost';
+    rg.style.width=rookGhost.rFrom.w*0.82+'px'; rg.style.height=rookGhost.rFrom.h*0.82+'px';
+    rg.style.left=(rookGhost.rFrom.x+rookGhost.rFrom.w*0.09)+'px'; rg.style.top=(rookGhost.rFrom.y+rookGhost.rFrom.h*0.09)+'px';
+    rg.innerHTML=art(rookGhost.side,'r',{generic:blind});
+    fxLayer.appendChild(rg);
+    requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+      rg.style.left=(rookGhost.rTo.x+rookGhost.rTo.w*0.09)+'px'; rg.style.top=(rookGhost.rTo.y+rookGhost.rTo.h*0.09)+'px';
+    });});
+    setTimeout(()=>rg.remove(),340);
+  }
   let eaten=null;
   if(target){
     eaten=document.createElement('div');
     eaten.className='eaten';
-    eaten.style.width=to.w*0.82+'px'; eaten.style.height=to.h*0.82+'px';
-    eaten.style.left=(to.x+to.w*0.09)+'px'; eaten.style.top=(to.y+to.h*0.09)+'px';
+    eaten.style.width=capAt.w*0.82+'px'; eaten.style.height=capAt.h*0.82+'px';
+    eaten.style.left=(capAt.x+capAt.w*0.09)+'px'; eaten.style.top=(capAt.y+capAt.h*0.09)+'px';
     eaten.style.animationDelay='.22s';
-    eaten.innerHTML=creatureSVG(target.t,target.c,{generic:blind});
-    if(target.c==='b')eaten.firstElementChild.style.transform='scaleX(-1)';
+    eaten.innerHTML=art(target.c,target.t,{generic:blind});
     fxLayer.appendChild(eaten);
   }
   requestAnimationFrame(()=>{requestAnimationFrame(()=>{
@@ -815,7 +1176,7 @@ function animateGhost(p, target, from, to, done){
       ghost.classList.add('chomping');
       const bub=document.createElement('div');
       bub.className='chompBubble';
-      const words=['Chomp!','Gulp!','Nom nom!','Yum!','Munch!'];
+      const words=['Nom nom!','Chomp!','Gulp!','Yum!','Munch!'];
       bub.textContent=words[Math.floor(Math.random()*words.length)];
       bub.style.left=(to.x+to.w/2)+'px'; bub.style.top=(to.y-6)+'px';
       fxLayer.appendChild(bub);
@@ -823,10 +1184,10 @@ function animateGhost(p, target, from, to, done){
         const d=document.createElement('div');
         d.className='fxDot';
         d.textContent=['🫧','💦','✨','🫧','💛','🫧'][i];
-        d.style.left=(to.x+to.w/2)+'px'; d.style.top=(to.y+to.h/2)+'px';
+        d.style.left=(capAt.x+capAt.w/2)+'px'; d.style.top=(capAt.y+capAt.h/2)+'px';
         const ang=Math.PI*2*i/6;
-        d.style.setProperty('--dx',Math.cos(ang)*to.w*0.7+'px');
-        d.style.setProperty('--dy',Math.sin(ang)*to.h*0.7-14+'px');
+        d.style.setProperty('--dx',Math.cos(ang)*capAt.w*0.7+'px');
+        d.style.setProperty('--dy',Math.sin(ang)*capAt.h*0.7-14+'px');
         fxLayer.appendChild(d);
         setTimeout(()=>d.remove(),750);
       }
@@ -842,18 +1203,25 @@ function finishTurn(){
   turn=turn==='w'?'b':'w';
   render();
   const k=findKing(turn), enemy=turn==='w'?'b':'w';
-  const inCheck=k&&attacked(k[0],k[1],enemy);
+  const inCheck=k&&attacked(board,k[0],k[1],enemy);
   const canMove=hasAnyLegal(turn);
+  if(pendingEntry){
+    pendingEntry.check=inCheck;
+    pendingEntry.mate=inCheck&&!canMove;
+    pendingEntry.stale=!inCheck&&!canMove;
+    history.push({snap:clone(board),...pendingEntry});
+    pendingEntry=null;
+  }
   if(inCheck&&!canMove){showEnd(enemy,turn,'checkmate');return;}
   if(!inCheck&&!canMove){showEnd(null,null,'stalemate');return;}
   if(inCheck)playSfx('check');
   maybeBot();
 }
 function maybeBot(){
-  if(botOn&&turn!==playerSide&&!pendingPromotion&&!gameOver)setTimeout(botMove,520);
+  if(botOn&&turn!==playerSide&&!pendingPromotion&&!gameOver&&!setupMode&&reviewIdx<0)setTimeout(botMove,520);
 }
 
-/* ---------- Promotion ---------- */
+/* ================= PROMOTION ================= */
 function openPromo(color){
   const grid=document.getElementById('promoGrid');
   grid.innerHTML='';
@@ -861,10 +1229,11 @@ function openPromo(color){
   for(const t of options){
     const b=document.createElement('button');
     b.className='promoBtn';
-    b.innerHTML=creatureSVG(t,color)+`<span>${SPECIES[color][t].name}</span>`;
+    b.innerHTML=art(color,t)+`<span>${pieceName(color,t)}</span>`;
     b.onclick=()=>{
       const[r,c]=pendingPromotion;
       board[r][c].t=t;
+      if(pendingEntry)pendingEntry.promo=t;
       pendingPromotion=null;
       document.getElementById('promoModal').classList.remove('open');
       playSfx('promote');
@@ -876,69 +1245,75 @@ function openPromo(color){
   grid.querySelector('button').focus();
 }
 
-/* ---------- Bot ---------- */
-const VAL={p:1,n:3,b:3,m:3,d:4,r:5,h:6,c:7,q:9,a:11,k:100};
+/* ================= ALPHA PREDATOR (bot) ================= */
 function botMove(){
   const botColor=playerSide==='w'?'b':'w';
-  if(!botOn||turn!==botColor||gameOver||pendingPromotion||animating)return;
+  if(!botOn||turn!==botColor||gameOver||pendingPromotion||animating||setupMode)return;
   const choices=[];
   for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c]?.c===botColor){
-    for(const[nr,nc]of legalMoves(r,c)){
-      const t=board[nr][nc];
-      choices.push({r,c,nr,nc,score:t?(VAL[t.t]||1):0});
+    for(const mv of legalMoves(r,c)){
+      const t=mv.ep?board[r][mv.nc]:board[mv.nr][mv.nc];
+      choices.push({r,c,mv,score:t?(VAL[t.t]||1):0});
     }
   }
   if(!choices.length)return;
   choices.sort((a,b)=>b.score-a.score);
-  const bot=BOTS[botIndex];
-  const greed = bot.elo>=600?0.9 : bot.elo>=450?0.75 : bot.elo>=350?0.6 : bot.elo>=250?0.35 : 0.15;
+  const bot=PREDATORS[botIndex];
+  const greed=bot.elo>=600?0.9:bot.elo>=450?0.75:bot.elo>=350?0.6:bot.elo>=250?0.35:0.15;
   let pool=choices;
   if(Math.random()<greed){const best=choices[0].score;pool=choices.filter(x=>x.score===best);}
   const pick=pool[Math.floor(Math.random()*pool.length)];
-  doMove(pick.r,pick.c,pick.nr,pick.nc);
+  doMove(pick.r,pick.c,pick.mv);
 }
 
-/* ---------- Render ---------- */
+/* ================= RENDER ================= */
 function render(){
   boardEl.innerHTML='';
-  const blind=(mode==='blind')&&!reveal;
-  boardEl.classList.toggle('showNames',reveal);
+  const reviewing=reviewIdx>=0;
+  const bd=reviewing?history[reviewIdx].snap:board;
+  const entry=reviewing&&reviewIdx>0?history[reviewIdx]:null;
+  const blind=isBlind()&&!reviewing;
+  boardEl.classList.toggle('showNames',reveal&&!blind);
   const rows=[...Array(8).keys()], cols=[...Array(8).keys()];
   if(flipped){rows.reverse();cols.reverse();}
-  const kW=findKing('w'),kB=findKing('b');
-  const checkSq =
-    (turn==='w'&&kW&&attacked(kW[0],kW[1],'b'))?kW:
-    (turn==='b'&&kB&&attacked(kB[0],kB[1],'w'))?kB:null;
-  const files='abcdefgh';
+  let checkSq=null;
+  if(!reviewing&&!setupMode){
+    const k=findKing(turn,bd);
+    if(k&&attacked(bd,k[0],k[1],turn==='w'?'b':'w'))checkSq=k;
+  }
   for(const r of rows)for(const c of cols){
     const sq=document.createElement('button');
     sq.type='button';
     sq.className='square '+(((r+c)%2)?'dark':'light');
-    if(selected&&selected[0]===r&&selected[1]===c)sq.classList.add('selected');
-    if(lastMove&&lastMove.some(([a,b])=>a===r&&b===c))sq.classList.add('lastMove');
-    if(moves.some(([a,b])=>a===r&&b===c))sq.classList.add(board[r][c]?'capture':'move');
-    if(checkSq&&checkSq[0]===r&&checkSq[1]===c)sq.classList.add('checkKing');
-    const p=board[r][c];
-    const coord=files[c]+(8-r);
+    if(!reviewing){
+      if(selected&&selected[0]===r&&selected[1]===c)sq.classList.add('selected');
+      if(lastMove&&!setupMode&&lastMove.some(([a,b])=>a===r&&b===c))sq.classList.add('lastMove');
+      const mv=moves.find(m=>m.nr===r&&m.nc===c);
+      if(mv)sq.classList.add((bd[r][c]||mv.ep)?'capture':'move');
+      if(checkSq&&checkSq[0]===r&&checkSq[1]===c)sq.classList.add('checkKing');
+    }else if(entry){
+      if((entry.from[0]===r&&entry.from[1]===c)||(entry.to[0]===r&&entry.to[1]===c))sq.classList.add('lastMove');
+      if(entry.to[0]===r&&entry.to[1]===c){sq.classList.add('selected');if(entry.captured)sq.classList.add('reviewCap');}
+    }
+    const p=bd[r][c];
+    const coord=sqName(r,c);
     if(p){
-      const spec=SPECIES[p.c][p.t];
-      const label = blind
-        ? (p.c==='w'?'a dolphin':'a shark')
-        : `${spec.name}, the ${p.c==='w'?'dolphin':'shark'} ${ROLE[p.t].toLowerCase()}`;
+      const label=blind
+        ?`a mystery ${teamOf(p.c).label.toLowerCase().replace(/s$/,'')}`
+        :`${pieceName(p.c,p.t)}, the ${teamOf(p.c).label.toLowerCase()} ${ROLE[p.t].toLowerCase()}`;
       sq.setAttribute('aria-label',`${coord}: ${label}`);
       const piece=document.createElement('div');
       piece.className='piece';
-      piece.innerHTML=creatureSVG(p.t,p.c,{generic:blind});
-      if(p.c==='b')piece.firstElementChild.style.transform='scaleX(-1)';
+      piece.innerHTML=art(p.c,p.t,{generic:blind});
       sq.appendChild(piece);
       if(!blind){
         const badge=document.createElement('div');
         badge.className='badge';
-        badge.textContent=spec.name;
+        badge.textContent=pieceName(p.c,p.t);
         sq.appendChild(badge);
       }
     }else{
-      sq.setAttribute('aria-label',`${coord}: empty water`);
+      sq.setAttribute('aria-label',`${coord}: empty`);
     }
     sq.onclick=()=>clickSquare(r,c);
     boardEl.appendChild(sq);
@@ -947,36 +1322,43 @@ function render(){
   renderCaptured();
 }
 function updateStatus(){
+  if(reviewIdx>=0)return;
+  if(setupMode){
+    statusFace.textContent='🛠️';
+    statusEl.textContent='Setup time! Tap a piece, then tap the board.';
+    return;
+  }
   const enemy=turn==='w'?'b':'w', k=findKing(turn);
-  const check=k&&attacked(k[0],k[1],enemy);
-  statusFace.textContent=turn==='w'?'🐬':'🦈';
+  const check=k&&attacked(board,k[0],k[1],enemy);
+  statusFace.textContent=sideEmoji(turn);
   const who=displayName(turn);
-  const team=turn==='w'?'dolphins':'sharks';
-  const label=names[turn]?`${who}'s ${team}`:who;
-  statusEl.textContent=label+(check?' — careful, check! 😲':' — time to swim!');
+  const label=names[turn]?`${who}'s ${teamOf(turn).label.toLowerCase()}`:who;
+  statusEl.textContent=label+(check?' — careful, check! 😲':' — time to hunt!');
   renderClocks();
 }
 function renderCaptured(){
-  const blind=(mode==='blind')&&!reveal;
+  const blind=isBlind();
+  document.getElementById('capBLabel').textContent=`${sideEmoji('b')} ${displayName('b')} ate…`;
+  document.getElementById('capWLabel').textContent=`${sideEmoji('w')} ${displayName('w')} ate…`;
   const fill=(el,list)=>{
     el.innerHTML='';
     for(const p of list){
       const d=document.createElement('div');
       d.className='mini';
-      d.title=blind?'':SPECIES[p.c][p.t].name;
-      d.innerHTML=creatureSVG(p.t,p.c,{generic:blind});
+      d.title=blind?'':pieceName(p.c,p.t);
+      d.innerHTML=art(p.c,p.t,{generic:blind});
       el.appendChild(d);
     }
     if(!list.length)el.innerHTML='<span style="font-size:12px;color:#9dbdd2;font-weight:700;align-self:center">No snacks yet…</span>';
   };
-  fill(capB,captured.b); /* sharks ate these (dolphins) */
-  fill(capW,captured.w); /* dolphins ate these (sharks) */
+  fill(capB,captured.b);
+  fill(capW,captured.w);
 }
 function renderLegend(){
   const el=document.getElementById('legend');
   el.innerHTML='';
   if(mode==='blind'){
-    el.innerHTML='<div style="grid-column:1/-1;font-weight:600">🤫 It\'s a mystery! Every shark looks like a Great White and every dolphin looks like a Bottlenose. Tap "Names" to peek.</div>';
+    el.innerHTML='<div style="grid-column:1/-1;font-weight:600">🤫 It\'s a mystery! Every piece hides behind the same face. Tap "Names" to peek.</div>';
     return;
   }
   const types=(mode==='wild')?['k','a','c','h','d','m','r','p']:['k','q','r','n','b','p'];
@@ -984,29 +1366,75 @@ function renderLegend(){
     for(const s of ['w','b']){
       const li=document.createElement('div');
       li.className='li';
-      li.innerHTML=creatureSVG(t,s)+`<span>${SPECIES[s][t].name}<br><small style="color:#8aa9c0">${ROLE[t]}</small></span>`;
+      li.innerHTML=art(s,t)+`<span>${pieceName(s,t)}<br><small style="color:#8aa9c0">${ROLE[t]}</small></span>`;
       el.appendChild(li);
     }
   }
 }
 function renderRules(){
   const el=document.getElementById('rulesText');
-  if(mode==='reef')el.innerHTML='Classic chess with sea friends! <b>Babies</b> (pawns) can grow up when they reach the far side of the ocean.';
-  else if(mode==='blind')el.innerHTML='Mystery Deep uses normal chess rules, but every piece looks the same. Remember where your <b>royals</b> are hiding!';
-  else el.innerHTML='Wild Waters super-moves: <b>Megalodon / Super Orca</b> moves like queen + knight. <b>Tiger Shark / Beluga</b> = rook + knight. <b>Sawshark / Narwhal</b> = bishop + knight. <b>Goblin / Dusky</b> keeps knight-hopping in a line. <b>Zebra / Spotted</b> leaps in a long (1,3) jump. Three back pawns are Chancellors too!';
+  if(mode==='normal')el.innerHTML='Classic chess with full rules: castling, en passant, and promotion! <b>Babies</b> (pawns) grow up when they reach the far side.';
+  else if(mode==='blind')el.innerHTML='Mystery Mode uses normal chess rules, but every piece looks the same. Remember where your <b>royals</b> are hiding!';
+  else if(mode==='custom')el.innerHTML='Custom Chess: you built this board! Every piece moves by normal rules (no castling from custom spots). Try giving the other team just 4 or 5 pieces for a fun challenge.';
+  else el.innerHTML='Wild Waters super-moves: <b>Amazon</b> = queen + knight. <b>Chancellor</b> = rook + knight. <b>Archbishop</b> = bishop + knight. <b>Nightrider</b> keeps knight-hopping in a line. <b>Camel</b> leaps in a long (1,3) jump. Three back pawns are Chancellors too!';
 }
 function updateSideUI(){
   document.getElementById('modePill').textContent=`${MODES[mode].emoji} ${MODES[mode].name}`;
-  const bot=BOTS[botIndex];
-  document.getElementById('botPill').textContent=botOn?`🤖 ${bot.em} ${bot.name} (${bot.label}) plays ${playerSide==='w'?'sharks':'dolphins'}`:'🧑‍🤝‍🧑 Two players, pass & play';
-  document.getElementById('tagline').textContent=MODES[mode].desc;
+  const bot=PREDATORS[botIndex];
+  document.getElementById('botPill').textContent=botOn
+    ?`${bot.em} Alpha Predator: ${bot.name} (${bot.label}, Elo ${bot.elo})`
+    :'🧑‍🤝‍🧑 Two players, pass & play';
+  document.getElementById('tagline').textContent=`${sideEmoji('w')} ${displayName('w')} vs ${displayName('b')} ${sideEmoji('b')} — ${MODES[mode].desc}`;
   renderLegend(); renderRules();
 }
 
-/* ---------- End of game ---------- */
+/* ================= REVIEW ================= */
+function reviewCaption(){
+  const cap=document.getElementById('reviewCaption');
+  if(reviewIdx<=0){cap.textContent=`Start position — ${history.length-1} moves in this game. Tap Next ▶`;return;}
+  const e=history[reviewIdx];
+  let txt=`Move ${reviewIdx}: ${pieceName(e.mover.c,e.mover.t)} ${sqName(...e.from)} → ${sqName(...e.to)}`;
+  if(e.castle)txt+=e.castle==='k'?' — castled kingside! 🏰':' — castled queenside! 🏰';
+  if(e.captured)txt+=` — ate ${pieceName(e.captured.c,e.captured.t)}! 😋`;
+  if(e.ep)txt+=' (sneaky en passant!)';
+  if(e.promo)txt+=` — grew into ${pieceName(e.mover.c,e.promo)}! ✨`;
+  if(e.mate)txt+=' — CHECKMATE! 🏆';
+  else if(e.check)txt+=' — check! 😲';
+  else if(e.stale)txt+=' — stalemate. 🤝';
+  cap.textContent=txt;
+}
+function enterReview(){
+  if(history.length<1)return;
+  document.getElementById('endModal').classList.remove('open');
+  reviewIdx=history.length-1;
+  document.getElementById('reviewBar').classList.add('show');
+  statusFace.textContent='🎬';
+  statusEl.textContent='Reviewing the game — use Back and Next!';
+  reviewCaption();
+  render();
+  statusFace.textContent='🎬';
+  statusEl.textContent='Reviewing the game — use Back and Next!';
+}
+function exitReview(){
+  reviewIdx=-1;
+  document.getElementById('reviewBar').classList.remove('show');
+  render();
+  if(gameOver)document.getElementById('endModal').classList.add('open');
+}
+document.getElementById('revBack').onclick=()=>{if(reviewIdx>0){reviewIdx--;reviewCaption();render();playSfx('move');}};
+document.getElementById('revNext').onclick=()=>{if(reviewIdx<history.length-1){reviewIdx++;reviewCaption();render();const e=history[reviewIdx];playSfx(e.mate?'win':e.captured?'capture':e.check?'check':'move');}};
+document.getElementById('revDone').onclick=exitReview;
+document.addEventListener('keydown',(ev)=>{
+  if(reviewIdx<0)return;
+  if(ev.key==='ArrowLeft')document.getElementById('revBack').click();
+  if(ev.key==='ArrowRight')document.getElementById('revNext').click();
+});
+
+/* ================= END OF GAME ================= */
 function showEnd(winner,loser,kind){
   gameOver=true;
   stopClock(); renderClocks();
+  document.getElementById('reviewBtn').style.display=history.length>1?'block':'none';
   const scene=document.getElementById('endScene');
   const title=document.getElementById('endTitle');
   const sub=document.getElementById('endSub');
@@ -1014,54 +1442,44 @@ function showEnd(winner,loser,kind){
   scene.innerHTML='<div class="sun"></div><div class="seafloor"></div>'+
     '<div class="weed" style="left:8%">🌿</div><div class="weed" style="left:22%;animation-delay:.4s">🪸</div>'+
     '<div class="weed" style="right:12%;animation-delay:.8s">🌿</div><div class="weed" style="right:30%;animation-delay:.2s">🐚</div>';
+  const kingSVG=(side)=>pieceSVG(teams[side],'k',{flip:side==='b'});
   if(kind==='stalemate'){
     title.textContent='Stalemate!';
-    sub.textContent='Nobody can move — the ocean calls a truce.';
-    text.textContent='Sharks and dolphins share a snack and become friends. 🤝';
+    sub.textContent='Nobody can move — the wild calls a truce.';
+    text.textContent='Both predators share a snack and become friends. 🤝';
     scene.insertAdjacentHTML('beforeend',
-      `<div class="swimmer" style="left:18%;top:70px">${creatureSVG('k','b')}</div>
-       <div class="swimmer" style="right:18%;top:70px">${creatureSVG('k','w')}</div>
+      `<div class="swimmer" style="left:18%;top:70px">${kingSVG('b')}</div>
+       <div class="swimmer" style="right:18%;top:70px">${kingSVG('w')}</div>
        <div class="heartBurp" style="left:48%;animation:heartUp 2s ease .4s infinite">💕</div>`);
   }else if(kind==='timeout'||kind==='resign'){
-    const winName=displayName(winner);
     title.textContent=kind==='timeout'?'Time\'s up!':'Good game!';
-    sub.textContent=`${winName} win the ocean! 🏆`;
+    sub.textContent=`${displayName(winner)} win! 🏆`;
     text.textContent=kind==='timeout'
-      ?`${displayName(loser)} ran out of swimming time. Rematch?`
+      ?`${displayName(loser)} ran out of hunting time. Rematch?`
       :`${displayName(loser)} waves a little white flag. Well played!`;
     scene.insertAdjacentHTML('beforeend',
-      `<div class="swimmer" style="left:50%;top:64px;transform:translateX(-50%)">${creatureSVG('k',winner)}</div>
+      `<div class="swimmer" style="left:50%;top:64px;transform:translateX(-50%)">${kingSVG(winner)}</div>
        <div class="heartBurp" style="left:44%;animation:heartUp 1.8s ease .3s infinite">🏆</div>
        <div class="heartBurp" style="left:58%;animation:heartUp 2.1s ease .7s infinite">💛</div>`);
-    if(winner==='b'){const w=scene.querySelector('.swimmer svg');if(w)w.style.transform='scaleX(-1)';}
   }else{
-    const winName=displayName(winner);
     title.textContent='Checkmate!';
-    sub.textContent=`${winName} win the ocean! 🏆`;
-    text.textContent=(winner==='w'
-      ?'The Bottlenose gives a big friendly GULP… don\'t worry, everyone is okay!'
-      :'The Great White gives a big friendly GULP… don\'t worry, everyone is okay!');
-    const winSVG=creatureSVG('k',winner);
-    const loseSVG=creatureSVG('k',loser);
+    sub.textContent=`${displayName(winner)} win! 🏆`;
+    text.textContent=`${pieceName(winner,'k')} gives ${pieceName(loser,'k')} a big friendly NOM NOM… don't worry, everyone is okay!`;
     scene.insertAdjacentHTML('beforeend',
-      `<div class="swimmer winnerAnim">${winSVG}</div>
-       <div class="runner loserAnim">${loseSVG}</div>
-       <div class="gulpText">GULP!</div>
+      `<div class="swimmer winnerAnim">${kingSVG(winner)}</div>
+       <div class="runner loserAnim">${kingSVG(loser)}</div>
+       <div class="gulpText">NOM NOM!</div>
        <div class="heartBurp">💛</div>
        <div class="heartBurp" style="left:70%;animation-delay:.15s">🫧</div>`);
-    const w=scene.querySelector('.winnerAnim svg');
-    if(winner==='b'&&w)w.style.transform='scaleX(-1)';
-    const l=scene.querySelector('.loserAnim svg');
-    if(loser==='b'&&l)l.style.transform='scaleX(-1)';
   }
   playSfx(kind==='stalemate'?'check':'win');
   document.getElementById('endModal').classList.add('open');
 }
 
-/* ---------- Sounds ---------- */
+/* ================= SOUNDS ================= */
 function ctx(){audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();return audioCtx}
 function beep(freq,dur,delay=0,type='sine',vol=.08){
-  if(!sfxOn)return;
+  if(!sfxOn&&type!=='triangle')return;
   const a=ctx(),o=a.createOscillator(),g=a.createGain();
   o.type=type;o.frequency.value=freq;
   g.gain.setValueAtTime(vol,a.currentTime+delay);
@@ -1071,45 +1489,58 @@ function beep(freq,dur,delay=0,type='sine',vol=.08){
 }
 function playSfx(kind){
   if(!sfxOn)return;
-  if(kind==='move'){beep(520,.09);}
+  if(kind==='move')beep(520,.09);
   if(kind==='capture'){beep(300,.1,0,'square',.07);beep(180,.14,.08,'square',.07);}
   if(kind==='check'){beep(740,.12);beep(880,.14,.12);}
   if(kind==='promote'){beep(523,.1);beep(659,.1,.1);beep(784,.16,.2);}
   if(kind==='win'){beep(523,.14);beep(659,.14,.14);beep(784,.14,.28);beep(1047,.3,.42);}
 }
-function toggleMusic(){
-  musicOn=!musicOn;
+function setMusic(on){
+  musicOn=on;
   const b=document.getElementById('music');
   b.textContent='🎵 Music: '+(musicOn?'on':'off');
   b.setAttribute('aria-pressed',musicOn);
   if(musicOn)startMusic();else stopMusic();
 }
 function startMusic(){
+  stopMusic();
   const notes=[392,494,587,494,440,523,659,523];let i=0;
   musicTimer=setInterval(()=>{beep(notes[i++%notes.length],.2,0,'triangle',.03);},560);
 }
 function stopMusic(){if(musicTimer)clearInterval(musicTimer);musicTimer=null;}
 
-/* ---------- Save / load ---------- */
+/* ================= SAVE / LOAD ================= */
 function saveGame(){
+  if(setupMode){statusEl.textContent='Finish setup before saving!';return;}
   try{
-    localStorage.setItem('sharkChessSave',JSON.stringify({board,turn,captured,mode,playerSide,botOn,botIndex,reveal,flipped,lastMove,names,timerSetting,clocks}));
+    localStorage.setItem('nomnomChessSave',JSON.stringify({v:2,board,turn,captured,mode,playerSide,botOn,botIndex,reveal,flipped,lastMove,names,timerSetting,clocks,teams,epTarget,history}));
     statusEl.textContent='Game saved! 💾';
   }catch(e){statusEl.textContent='Could not save on this device.';}
 }
 function loadGame(){
-  const raw=localStorage.getItem('sharkChessSave');
+  const raw=localStorage.getItem('nomnomChessSave')||localStorage.getItem('sharkChessSave');
   if(!raw){statusEl.textContent='No saved game yet.';return;}
   try{
     const d=JSON.parse(raw);
     board=d.board;turn=d.turn;captured=d.captured||{w:[],b:[]};
-    /* older saves stored captured as strings */
     for(const side of['w','b'])captured[side]=captured[side].map(x=>typeof x==='string'?{t:x,c:side==='w'?'b':'w'}:x);
-    mode=d.mode||'reef';playerSide=d.playerSide||'w';botOn=!!d.botOn;botIndex=d.botIndex||0;
+    mode=d.mode||'normal';
+    if(mode==='reef')mode='normal';
+    playerSide=d.playerSide||'w';botOn=!!d.botOn;botIndex=d.botIndex||0;
     reveal=!!d.reveal;flipped=!!d.flipped;lastMove=d.lastMove||null;
     names=d.names||{w:'',b:''};timerSetting=d.timerSetting||0;
     clocks=d.clocks||{w:timerSetting*60,b:timerSetting*60};
+    teams=d.teams||{w:'dolphins',b:'sharks'};
+    epTarget=d.epTarget||null;
+    history=d.history||[{snap:clone(board)}];
+    if(!d.v){ /* legacy save: no castling rights recorded, so lock castling */
+      for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c])board[r][c].moved=true;
+    }
     selected=null;moves=[];pendingPromotion=null;gameOver=false;animating=false;
+    setupMode=false;reviewIdx=-1;pendingEntry=null;
+    document.getElementById('setupBar').classList.remove('show');
+    document.getElementById('reviewBar').classList.remove('show');
+    document.getElementById('reviewBtn').style.display='none';
     document.getElementById('endModal').classList.remove('open');
     document.getElementById('clocks').classList.toggle('show',timerSetting>0);
     renderClocks();startClock();
@@ -1122,8 +1553,19 @@ function syncToggles(){
   rv.setAttribute('aria-pressed',reveal);
 }
 
-/* ---------- Start screen ---------- */
-let selMode='reef', selSide='w', selOpp='bot', selTime=0;
+/* ================= START SCREEN ================= */
+let selMode='normal', selTeamMe='dolphins', selTeamOpp='sharks', selOpp='bot', selFirst=true, selTime=0, selMusic=false;
+function teamRowBuild(el, current, other, onPick){
+  el.innerHTML='';
+  for(const key of Object.keys(THEMES)){
+    const T=THEMES[key];
+    const b=document.createElement('button');
+    b.className='teamCard'+(current===key?' on':'');
+    b.innerHTML=`<div class="em">${T.emoji}</div><div class="nm">${T.label}</div>`;
+    b.onclick=()=>onPick(key);
+    el.appendChild(b);
+  }
+}
 function buildStart(){
   const mg=document.getElementById('modeGrid');mg.innerHTML='';
   for(const key of Object.keys(MODES)){
@@ -1134,16 +1576,19 @@ function buildStart(){
     b.onclick=()=>{selMode=key;buildStart();};
     mg.appendChild(b);
   }
-  const sg=document.getElementById('sideGrid');sg.innerHTML='';
-  for(const[key,em,nm,ds]of[['w','🐬','Dolphins','Kind and clever — they swim first!'],['b','🦈','Sharks','Toothy and brave — they swim second.']]){
-    const b=document.createElement('button');
-    b.className='chooseCard'+(selSide===key?' on':'');
-    b.innerHTML=`<div class="big">${em}</div><div class="name">${nm}</div><div class="desc">${ds}</div>`;
-    b.onclick=()=>{selSide=key;buildStart();};
-    sg.appendChild(b);
-  }
+  const isBot=selOpp==='bot';
+  document.getElementById('teamMeTitle').textContent=isBot?'Your team':'Team 1 (moves first)';
+  document.getElementById('teamOppTitle').textContent=isBot?'Alpha Predator team':'Team 2';
+  teamRowBuild(document.getElementById('teamMeRow'), selTeamMe, selTeamOpp, (k)=>{
+    if(k===selTeamOpp)selTeamOpp=selTeamMe; /* swap to keep them different */
+    selTeamMe=k;buildStart();
+  });
+  teamRowBuild(document.getElementById('teamOppRow'), selTeamOpp, selTeamMe, (k)=>{
+    if(k===selTeamMe)selTeamMe=selTeamOpp;
+    selTeamOpp=k;buildStart();
+  });
   const og=document.getElementById('oppGrid');og.innerHTML='';
-  for(const[key,em,nm,ds]of[['bot','🤖','Swim buddy (bot)','Play against a friendly sea robot.'],['human','🧑‍🤝‍🧑','A friend','Pass and play on this device.']]){
+  for(const[key,em,nm,ds]of[['bot','🐺','Alpha Predator','Face a friendly Alpha Predator.'],['human','🧑‍🤝‍🧑','A friend','Pass and play on this device.']]){
     const b=document.createElement('button');
     b.className='chooseCard'+(selOpp===key?' on':'');
     b.innerHTML=`<div class="big">${em}</div><div class="name">${nm}</div><div class="desc">${ds}</div>`;
@@ -1151,26 +1596,36 @@ function buildStart(){
     og.appendChild(b);
   }
   const br=document.getElementById('botRow');
-  br.style.display=selOpp==='bot'?'grid':'none';
+  br.style.display=isBot?'grid':'none';
   br.innerHTML='';
-  BOTS.forEach((bot,i)=>{
-    const b=document.createElement('button');
-    b.className='botCard'+(botIndex===i?' on':'');
-    b.innerHTML=`<div class="em">${bot.em}</div><div class="nm">${bot.name}</div><div class="lv">${bot.label}</div>`;
-    b.title=`Elo ${bot.elo}`;
-    b.onclick=()=>{botIndex=i;buildStart();};
-    br.appendChild(b);
-  });
-  /* names: with a bot, only one player types a name */
-  const lblW=document.getElementById('nameWLabel');
-  const wrapB=document.getElementById('nameBWrap');
-  if(selOpp==='bot'){
-    lblW.textContent=(selSide==='w'?'🐬':'🦈')+' Your name';
-    wrapB.style.display='none';
-  }else{
-    lblW.textContent='🐬 Dolphin player';
-    wrapB.style.display='';
+  if(isBot){
+    const lbl=document.createElement('div');
+    lbl.className='chooseTitle';
+    lbl.style.gridColumn='1/-1';
+    lbl.textContent='Choose Alpha Predator';
+    br.appendChild(lbl);
+    PREDATORS.forEach((bot,i)=>{
+      const b=document.createElement('button');
+      b.className='botCard'+(botIndex===i?' on':'');
+      b.innerHTML=`<div class="em">${bot.em}</div><div class="nm">${bot.name}</div><div class="lv">${bot.label} · Elo ${bot.elo}</div><div class="ps">${bot.ps}</div>`;
+      b.onclick=()=>{botIndex=i;buildStart();};
+      br.appendChild(b);
+    });
   }
+  document.getElementById('firstBlock').style.display=isBot?'block':'none';
+  if(isBot){
+    const fg=document.getElementById('firstGrid');fg.innerHTML='';
+    for(const[val,em,nm]of[[true,'🥇','You go first'],[false,'🐾','Alpha Predator first']]){
+      const b=document.createElement('button');
+      b.className='chooseCard'+(selFirst===val?' on':'');
+      b.innerHTML=`<div class="big">${em}</div><div class="name">${nm}</div>`;
+      b.onclick=()=>{selFirst=val;buildStart();};
+      fg.appendChild(b);
+    }
+  }
+  document.getElementById('nameMeLabel').textContent=isBot?`${THEMES[selTeamMe].emoji} Your name`:`${THEMES[selTeamMe].emoji} Team 1 player`;
+  document.getElementById('nameOppLabel').textContent=`${THEMES[selTeamOpp].emoji} Team 2 player`;
+  document.getElementById('nameOppWrap').style.display=isBot?'none':'';
   const tg=document.getElementById('timeGrid');tg.innerHTML='';
   for(const t of TIMES){
     const b=document.createElement('button');
@@ -1179,23 +1634,38 @@ function buildStart(){
     b.onclick=()=>{selTime=t.v;buildStart();};
     tg.appendChild(b);
   }
+  const mgd=document.getElementById('musicGrid');mgd.innerHTML='';
+  for(const[val,em,nm]of[[true,'🎵','Music on'],[false,'🔕','Music off']]){
+    const b=document.createElement('button');
+    b.className='chooseCard'+(selMusic===val?' on':'');
+    b.innerHTML=`<div class="big">${em}</div><div class="name">${nm}</div>`;
+    b.onclick=()=>{selMusic=val;buildStart();};
+    mgd.appendChild(b);
+  }
 }
 document.getElementById('startBtn').onclick=()=>{
-  mode=selMode;playerSide=selSide;botOn=(selOpp==='bot');timerSetting=selTime;
-  const nW=document.getElementById('nameW').value.trim();
-  const nB=document.getElementById('nameB').value.trim();
+  mode=selMode;botOn=(selOpp==='bot');timerSetting=selTime;
+  const nMe=document.getElementById('nameMe').value.trim();
+  const nOpp=document.getElementById('nameOpp').value.trim();
   if(botOn){
+    playerSide=selFirst?'w':'b';
+    teams={w:'',b:''};
+    teams[playerSide]=selTeamMe;
+    teams[playerSide==='w'?'b':'w']=selTeamOpp;
     names={w:'',b:''};
-    names[playerSide]=nW;
-    names[playerSide==='w'?'b':'w']=BOTS[botIndex].name;
+    names[playerSide]=nMe;
+    names[playerSide==='w'?'b':'w']=PREDATORS[botIndex].name;
   }else{
-    names={w:nW,b:nB};
+    playerSide='w';
+    teams={w:selTeamMe,b:selTeamOpp};
+    names={w:nMe,b:nOpp};
   }
   document.getElementById('startModal').classList.remove('open');
+  setMusic(selMusic);
   initial();
 };
 
-/* ---------- Wiring ---------- */
+/* ================= WIRING ================= */
 document.getElementById('newGame').onclick=()=>{
   buildStart();
   document.getElementById('startModal').classList.add('open');
@@ -1206,36 +1676,36 @@ document.getElementById('again').onclick=()=>{
   document.getElementById('startModal').classList.add('open');
 };
 document.getElementById('exitEnd').onclick=()=>document.getElementById('endModal').classList.remove('open');
+document.getElementById('endReview').onclick=enterReview;
+document.getElementById('reviewBtn').onclick=enterReview;
 document.getElementById('reveal').onclick=()=>{reveal=!reveal;syncToggles();render();renderLegend();};
 document.getElementById('flip').onclick=()=>{flipped=!flipped;render();};
 document.getElementById('sfx').onclick=function(){sfxOn=!sfxOn;this.textContent='🔔 Sounds: '+(sfxOn?'on':'off');this.setAttribute('aria-pressed',sfxOn);};
-document.getElementById('music').onclick=toggleMusic;
+document.getElementById('music').onclick=()=>setMusic(!musicOn);
 document.getElementById('save').onclick=saveGame;
 document.getElementById('load').onclick=loadGame;
 document.getElementById('resign').onclick=()=>{
-  if(gameOver||document.getElementById('startModal').classList.contains('open'))return;
+  if(gameOver||setupMode||reviewIdx>=0||document.getElementById('startModal').classList.contains('open'))return;
   const resigner=botOn?playerSide:turn;
   const winner=resigner==='w'?'b':'w';
   if(confirm(`${displayName(resigner)}, wave the white flag and resign?`)){
     showEnd(winner,resigner,'resign');
   }
 };
+document.getElementById('setupStandard').onclick=()=>{const m=mode;mode='normal';board=standardBoard();mode=m;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(board[r][c])board[r][c].moved=false;render();};
+document.getElementById('setupClear').onclick=()=>{board=Array.from({length:8},()=>Array(8).fill(null));render();};
+document.getElementById('setupStart').onclick=startCustomGame;
+
 const themeBtn=document.getElementById('theme');
 function applyTheme(dark){
   document.body.classList.toggle('dark',dark);
   themeBtn.textContent=dark?'☀️ Light mode':'🌙 Dark mode';
   themeBtn.setAttribute('aria-pressed',dark);
-  try{localStorage.setItem('sharkChessTheme',dark?'dark':'light');}catch(e){}
+  try{localStorage.setItem('nomnomChessTheme',dark?'dark':'light');}catch(e){}
 }
 themeBtn.onclick=()=>applyTheme(!document.body.classList.contains('dark'));
-try{applyTheme(localStorage.getItem('sharkChessTheme')==='dark');}catch(e){}
-
-/* PWA: register service worker (needs manifest.webmanifest, sw.js, icons alongside this file) */
-if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  });
-}
+try{applyTheme((localStorage.getItem('nomnomChessTheme')||localStorage.getItem('sharkChessTheme'))==='dark');}catch(e){}
 
 /* ambient bubbles */
 (function(){
@@ -1250,6 +1720,13 @@ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
     amb.appendChild(s);
   }
 })();
+
+/* PWA: register service worker */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
 
 buildStart();
 initial();

@@ -1,7 +1,7 @@
 {
-  "name": "Shark vs Dolphin Chess",
-  "short_name": "SharkChess",
-  "description": "A cute ocean chess adventure with sharks and dolphins.",
+  "name": "Nom Nom Chess",
+  "short_name": "NomNomChess",
+  "description": "A cute predator chess adventure. Chomp your way to checkmate!",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
